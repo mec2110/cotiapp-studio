@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CotiApp Studio · Calculadora para creativos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ==========================================================
+     0. TOKENS — Paleta, tipografía y sistema de espaciado 8px
+     ========================================================== */
+  :root{
+    --primary-dark:#2D0E9A;
+    --primary-dark-hover:#000000;
+    --primary-light:#08B2FC;
+    --bg-page:#F4F1FA;
+    --bg-soft-1:#F4F1FA;
+    --bg-soft-2:#EAE3FF;
+    --bg-soft-3:#C7EEFF;
+    --dark-bg:#121214;
+    --dark-bg-2:#1D1D20;
+    --white:#FFFFFF;
+    --border:#E1DCF0;
+    --border-dark:#2C2C30;
+    --text-main:#1B1330;
+    --text-muted:#71698A;
+    --text-on-dark:#FFFFFF;
+    --text-on-dark-muted:#B7B2C9;
+    --success:#3ABD23;
+    --success-soft:#E9FBD8;
+    --error:#FF674A;
+    --error-soft:#FFE3DD;
+    --warning:#FFC445;
+    --warning-soft:#FFF1D2;
+    --info:#08B2FC;
+    --info-soft:#DCF3FF;
+    --radius-lg:24px;
+    --radius-md:16px;
+    --radius-sm:12px;
+    --radius-pill:999px;
+    --shadow-card:0 1px 2px rgba(27,19,48,.04), 0 24px 48px -24px rgba(45,14,154,.18);
+    --shadow-dark:0 24px 48px -16px rgba(0,0,0,.5);
+    --font-main:'Open Sans', -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{ font-family:var(--font-main); background:var(--bg-page); color:var(--text-main); -webkit-font-smoothing:antialiased; }
+  img{ max-width:100%; display:block; }
+  button{ font-family:inherit; cursor:pointer; }
+  input,select,textarea{ font-family:inherit; }
+  a{ color:var(--primary-dark); }
+  svg{ display:block; }
+
+  h1,h2,h3,h4{ margin:0; font-weight:700; }
+  p{ margin:0; }
+  .h1{ font-size:32px; font-weight:700; line-height:1.2; }             /* H1 Bold 32px */
+  .h2{ font-size:24px; font-weight:600; line-height:1.3; }             /* H2 SemiBold 24px */
+  .body-text{ font-size:16px; font-weight:400; line-height:1.5; }      /* Cuerpo 16px */
+  .container{ max-width:1200px; margin:0 auto; padding-inline:24px; } /* 3 x 8px */
+
+  /* ==========================================================
+     1. TOPBAR / HERO
+     ========================================================== */
+  .topbar{ background:var(--white); border-bottom:1px solid var(--border); }
+  .topbar-inner{ max-width:1200px; margin:0 auto; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; } /* 2x8 / 3x8 */
+  .brand{ display:flex; align-items:center; gap:8px; }
+  .brand-mark{ width:32px; height:32px; border-radius:10px; background:var(--primary-dark); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; }
+  .brand-name{ font-weight:700; font-size:16px; color:var(--text-main); }
+  .topbar-link{ font-size:14px; font-weight:600; text-decoration:none; color:var(--primary-light); background:none; border:none; padding:0; font-family:inherit; }
+
+  .hero{ padding:32px 0 32px; } /* 4 x 8px */
+  .eyebrow-chip{ display:inline-block; background:var(--bg-soft-2); color:var(--primary-dark); font-size:12px; font-weight:700; letter-spacing:.02em; padding:6px 12px; border-radius:var(--radius-pill); margin-bottom:16px; } /* 2x8px */
+  .hero h1{ margin-bottom:8px; } /* 1 x 8px */
+  .hero p{ color:var(--text-muted); max-width:620px; }
+
+  /* ==========================================================
+     2. LAYOUT PRINCIPAL — grilla asimétrica (form + tarjeta flotante)
+     ========================================================== */
+  main{ padding-bottom:64px; } /* 8 x 8px */
+  .step-panel{ display:none; }
+  .step-panel.active{ display:grid; grid-template-columns:1fr 360px; gap:32px; align-items:start; } /* 4 x 8px gap */
+  .card-main{ background:var(--white); border-radius:var(--radius-lg); padding:32px; box-shadow:var(--shadow-card); } /* 4 x 8px padding */
+  .card-side{ background:var(--dark-bg); color:var(--text-on-dark); border-radius:var(--radius-lg); padding:32px; box-shadow:var(--shadow-dark); margin-top:40px; } /* asimetría: 5 x 8px offset */
+  .card-header-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; } /* 3x8 */
+  .card-eyebrow{ font-size:12px; font-weight:700; letter-spacing:.03em; color:var(--primary-light); margin-bottom:4px; display:block; }
+  .step-progress{ text-align:right; min-width:160px; }
+  .step-progress-label{ font-size:12px; font-weight:700; color:var(--primary-dark); display:flex; justify-content:space-between; gap:8px; margin-bottom:8px; }
+  .step-progress-track{ height:6px; border-radius:var(--radius-pill); background:var(--border); overflow:hidden; }
+  .step-progress-fill{ height:100%; background:var(--primary-dark); border-radius:var(--radius-pill); transition:width .3s ease; }
+  .section-title{ font-size:18px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px; } /* 1x8 */
+  .section-title small{ font-size:12px; color:var(--text-muted); font-weight:400; margin-left:auto; }
+  .section-title .icon{ color:var(--primary-dark); }
+  .section-help{ font-size:14px; color:var(--text-muted); margin-bottom:16px; } /* 2x8 */
+
+  /* ==========================================================
+     3. ÍCONOS
+     ========================================================== */
+  .icon{ width:18px; height:18px; flex-shrink:0; }
+  .icon-sm{ width:14px; height:14px; }
+  .icon-lg{ width:24px; height:24px; }
+  .icon svg{ width:100%; height:100%; display:block; } /* los SVG inyectados traen su propio width/height fijo; esto los fuerza a llenar el contenedor */
+
+  /* ==========================================================
+     4. CHIPS — selector de disciplina
+     ========================================================== */
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; } /* 1x8 gap / 3x8 margin */
+  .chip{ border:1.5px solid var(--primary-dark); background:var(--white); color:var(--primary-dark); border-radius:var(--radius-pill); padding:8px 16px; font-size:13px; font-weight:600; display:inline-flex; align-items:center; gap:6px; transition:background .15s ease, color .15s ease; } /* 1x8 / 2x8 padding */
+  .chip:hover{ background:var(--bg-soft-1); }
+  .chip.is-active{ background:var(--bg-soft-2); color:var(--primary-dark); border-color:var(--primary-dark); }
+  .chip .icon{ color:inherit; }
+
+  /* ==========================================================
+     5. CAMPOS DE FORMULARIO (dinámicos por disciplina)
+     ========================================================== */
+  .field-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:16px; } /* 2x8 gap/margin */
+  .field{ display:flex; flex-direction:column; gap:8px; } /* 1x8 */
+  .field label{ font-size:13px; font-weight:600; color:var(--text-main); }
+  .field-label-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .field input[type="number"], .field input[type="text"], .field input[type="email"], .field select, .field textarea{
+    border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:12px 16px; font-size:14px; color:var(--text-main);
+    background:var(--white); outline:none; width:100%; transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .field select{
+    appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232D0E9A' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat; background-position:right 12px center; padding-right:36px;
+  }
+  .field textarea{ resize:vertical; min-height:88px; }
+  .field input::placeholder, .field textarea::placeholder{ color:#A9A3BC; }
+  .field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--primary-dark); box-shadow:0 0 0 3px rgba(45,14,154,.12); }
+  .field.has-error input, .field.has-error select, .field.has-error textarea{ border-color:var(--error); box-shadow:0 0 0 3px rgba(255,103,74,.12); }
+  .field.has-error .field-msg{ color:var(--error); }
+  .field-msg{ font-size:12px; color:var(--text-muted); min-height:14px; }
+  .field-full{ grid-column:1 / -1; }
+
+  .mic-btn{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-soft-2); color:var(--primary-dark); border:none; border-radius:var(--radius-pill); padding:6px 14px; font-size:12px; font-weight:700; white-space:nowrap; } /* pill */
+  .mic-btn:hover{ background:var(--bg-soft-3); }
+  .mic-btn .icon{ color:inherit; }
+  .mic-btn.is-recording{ background:var(--error); color:#fff; animation:pulse 1.3s infinite; }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(255,103,74,.45); }
+    70%{ box-shadow:0 0 0 10px rgba(255,103,74,0); }
+    100%{ box-shadow:0 0 0 0 rgba(255,103,74,0); }
+  }
+
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--bg-soft-1); border-radius:var(--radius-md); padding:16px; margin-bottom:24px; } /* 2x8 padding / 3x8 margin */
+  .toggle-row-left{ display:flex; align-items:flex-start; gap:12px; }
+  .toggle-row-left input[type="checkbox"]{ margin-top:3px; width:18px; height:18px; accent-color:var(--primary-dark); flex-shrink:0; }
+  .toggle-row-left .icon{ margin-top:2px; color:var(--primary-dark); }
+  .toggle-row-left strong{ font-size:14px; display:block; }
+  .toggle-row-left small{ font-size:12px; color:var(--text-muted); }
+  .toggle-amount{ font-weight:700; font-size:14px; color:var(--primary-dark); white-space:nowrap; }
+
+  .card-footer{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding-top:24px; border-top:1px solid var(--border); } /* 3x8 */
+  .hint{ font-size:13px; color:var(--text-muted); }
+
+  /* ==========================================================
+     6. BOTONES (píldora)
+     ========================================================== */
+  .btn{ border-radius:var(--radius-pill); border:none; padding:12px 24px; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.01em;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px; transition:background .15s ease, color .15s ease, transform .1s ease, opacity .15s ease; } /* 3x8 padding horizontal */
+  .btn:active{ transform:translateY(1px); }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .btn-primary{ background:var(--primary-dark); color:#fff; }
+  .btn-primary:hover:not(:disabled){ background:var(--primary-dark-hover); }
+  .btn-secondary{ background:#fff; color:var(--primary-dark); border:1.5px solid var(--primary-dark); }
+  .btn-secondary:hover:not(:disabled){ background:var(--bg-soft-2); }
+  .btn-secondary.on-dark{ background:transparent; color:#fff; border-color:var(--border-dark); }
+  .btn-secondary.on-dark:hover:not(:disabled){ background:var(--dark-bg-2); }
+  .btn-text{ background:none; color:var(--primary-dark); padding:8px 4px; text-transform:none; font-weight:700; font-size:13px; }
+  .btn-text:hover{ text-decoration:underline; }
+  .btn-white-pill{ background:#fff; color:var(--text-main); width:100%; }
+  .btn-white-pill:hover:not(:disabled){ background:var(--bg-soft-2); }
+  .btn-row{ display:flex; gap:16px; } /* 2x8 */
+  .btn-block{ width:100%; }
+
+  /* ==========================================================
+     7. BADGES / ALERTAS / TOAST
+     ========================================================== */
+  .badge{ display:inline-flex; align-items:center; font-size:11px; font-weight:700; padding:4px 10px; border-radius:var(--radius-pill); white-space:nowrap; }
+  .badge-warning{ background:var(--warning); color:#4A3400; }
+  .badge-error{ background:var(--error); color:#fff; }
+  .badge-success{ background:var(--success); color:#fff; }
+  .badge-info{ background:var(--bg-soft-2); color:var(--primary-dark); }
+
+  .alert{ display:flex; align-items:flex-start; gap:8px; border-radius:var(--radius-md); padding:12px 16px; font-size:13px; line-height:1.4; margin-bottom:16px; } /* 2x8 padding */
+  .alert .icon{ margin-top:1px; }
+  .alert-info{ background:var(--info-soft); color:#08507A; }
+  .alert-dark{ background:rgba(8,178,252,.14); color:#8FDBFF; }
+  .alert-dark .icon{ color:#8FDBFF; }
+
+  .toast{
+    position:fixed; left:50%; bottom:24px; transform:translate(-50%, 16px); /* 3x8 offset */
+    background:var(--error); color:#fff; padding:14px 22px; border-radius:var(--radius-pill);
+    box-shadow:0 16px 32px -10px rgba(0,0,0,.4); display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:700; opacity:0; transition:opacity .25s ease, transform .25s ease;
+    z-index:9999; max-width:92vw;
+  }
+  .toast .icon{ color:#fff; }
+  .toast.is-visible{ opacity:1; transform:translate(-50%,0); }
+
+  /* ==========================================================
+     8. TARJETA OSCURA
+     ========================================================== */
+  .side-card-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .side-card-header h3{ font-size:18px; }
+  .side-label{ font-size:12px; letter-spacing:.02em; color:var(--text-on-dark-muted); margin-bottom:8px; }
+  .side-price{ font-size:26px; font-weight:700; margin-bottom:4px; line-height:1.25; }
+  .side-note{ font-size:12px; color:var(--text-on-dark-muted); margin-bottom:16px; }
+  .divider-dark{ border:none; border-top:1px solid var(--border-dark); margin:16px 0; }
+  .breakdown-list{ list-style:none; margin:0 0 16px; padding:0; display:flex; flex-direction:column; gap:12px; }
+  .breakdown-list li{ display:flex; justify-content:space-between; font-size:13px; gap:12px; }
+  .breakdown-list li span:first-child{ color:var(--text-on-dark-muted); }
+  .breakdown-list li span:last-child{ font-weight:700; white-space:nowrap; }
+  .side-subtitle{ font-size:13px; color:var(--text-on-dark-muted); margin-bottom:24px; line-height:1.5; }
+  .export-block{ margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border-dark); }
+  .export-block:last-of-type{ border-bottom:none; }
+  .export-block-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .export-block-head strong{ font-size:14px; }
+  .export-block p{ font-size:12px; color:var(--text-on-dark-muted); margin-bottom:12px; }
+
+  .dark-field{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .dark-field label{ font-size:12px; color:var(--text-on-dark-muted); font-weight:600; }
+  .dark-field input{ background:var(--dark-bg-2); border:1.5px solid var(--border-dark); border-radius:var(--radius-sm); padding:12px 16px; color:#fff; font-size:14px; outline:none; }
+  .dark-field input::placeholder{ color:#635C79; }
+  .dark-field input:focus{ border-color:var(--primary-light); box-shadow:0 0 0 3px rgba(8,178,252,.18); }
+  .dark-field.has-error input{ border-color:var(--error); box-shadow:0 0 0 3px rgba(255,103,74,.18); }
+  .dark-field .field-msg{ color:var(--error); }
+
+  .nested-light-card{ background:#fff; color:var(--text-main); border-radius:var(--radius-md); padding:16px; margin-top:16px; }
+  .nested-light-card strong{ font-size:13px; display:block; margin-bottom:4px; }
+  .nested-light-card p{ font-size:12px; color:var(--text-muted); line-height:1.5; }
+  .nested-light-card a{ font-weight:700; }
+
+  /* ==========================================================
+     9. #upload-box — carga de logo con ilustraciones propias
+     ========================================================== */
+  .dropzone{ border:2px dashed var(--primary-light); border-radius:var(--radius-md); background:var(--bg-soft-1); padding:32px 16px; text-align:center; margin-bottom:24px; transition:background .15s ease, border-color .15s ease; } /* 4x8 / 2x8 padding */
+  .dropzone.is-dragover{ background:var(--bg-soft-3); border-color:var(--primary-dark); }
+  .dropzone.is-error{ border-color:var(--error); background:var(--error-soft); }
+  .dropzone.is-success{ border-color:var(--success); background:var(--success-soft); }
+  .folder-illustration{ margin:0 auto 8px; display:flex; justify-content:center; }
+  .folder-illustration svg{ margin:0 auto; }
+  .dropzone-title{ font-weight:700; color:var(--primary-dark); margin-bottom:4px; font-size:14px; }
+  .dropzone.is-error .dropzone-title{ color:var(--error); }
+  .dropzone.is-success .dropzone-title{ color:var(--success); }
+  .dropzone-sub{ font-size:13px; color:var(--text-muted); margin-bottom:16px; }
+
+  .pdf-preview{ background:var(--bg-soft-1); border-radius:var(--radius-md); padding:24px; margin-bottom:24px; position:relative; } /* 3x8 */
+  .pdf-preview-head{ display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px; gap:8px; }
+  .pdf-logo-box{ width:56px; height:56px; border-radius:14px; background:var(--primary-dark); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; letter-spacing:.03em; overflow:hidden; }
+  .pdf-logo-box img{ width:100%; height:100%; object-fit:cover; }
+  .pdf-preview h4{ font-size:17px; margin-bottom:4px; }
+  .pdf-preview .muted-line{ font-size:13px; color:var(--text-muted); margin-bottom:16px; }
+  .pdf-price{ font-size:24px; font-weight:700; margin-bottom:4px; }
+  .pdf-preview hr{ border:none; border-top:1px solid var(--border); margin:16px 0; }
+  .link-note{ font-size:12px; color:var(--primary-light); font-weight:600; }
+
+  /* Plantilla de correo editable (Paso 3) */
+  .mail-fields{ background:var(--bg-soft-1); border-radius:var(--radius-md); padding:16px; margin-bottom:8px; } /* 2x8 */
+  .mail-fields .field{ margin-bottom:12px; }
+  .mail-fields .field:last-child{ margin-bottom:0; }
+  .mail-fields textarea{ min-height:230px; line-height:1.6; background:#fff; }
+  .mail-fields input{ background:#fff; }
+  .mail-actions{ display:flex; justify-content:flex-end; margin-bottom:24px; }
+
+  /* ==========================================================
+     10. PASO 3 — resumen final
+     ========================================================== */
+  .summary-title{ font-size:20px; margin-bottom:4px; }
+  .summary-sub{ font-size:13px; color:var(--text-muted); margin-bottom:2px; }
+  .divider-light{ border:none; border-top:1px solid var(--border); margin:20px 0; }
+  .price-big{ font-size:32px; font-weight:700; margin-bottom:4px; }
+  .muted-note{ font-size:13px; color:var(--text-muted); }
+  .summary-rows{ display:flex; flex-direction:column; gap:12px; margin:20px 0; }
+  .summary-rows div{ display:flex; justify-content:space-between; gap:16px; font-size:14px; }
+  .summary-rows span:first-child{ color:var(--text-muted); }
+  .summary-rows span:last-child{ font-weight:600; text-align:right; }
+  .summary-rows .is-link{ color:var(--primary-light); }
+  .success-illustration{ display:block; margin:0 auto 12px; }
+
+  /* ==========================================================
+     11. RESPONSIVE
+     ========================================================== */
+  @media (max-width:900px){
+    .step-panel.active{ grid-template-columns:1fr; }
+    .card-side{ margin-top:0; }
+    .field-grid{ grid-template-columns:1fr !important; }
+    .hero h1{ font-size:26px; }
+    .card-main, .card-side{ padding:24px; }
+    .card-header-row{ flex-direction:column; }
+    .step-progress{ text-align:left; width:100%; }
+  }
+  @media (max-width:480px){
+    .topbar-inner{ padding:12px 16px; }
+    .container{ padding-inline:16px; }
+    .btn-row{ width:100%; }
+    .btn-row .btn{ flex:1; }
+    .card-footer{ flex-direction:column; align-items:stretch; }
+  }
+
+  .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+  /* ==========================================================
+     12. MODAL — "Cómo funciona"
+     ========================================================== */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(27,19,48,.55);
+    display:none; align-items:center; justify-content:center;
+    padding:24px; z-index:10000; /* 3 x 8px padding */
+  }
+  .modal-overlay.is-open{ display:flex; }
+  .modal-card{
+    background:var(--white); border-radius:var(--radius-lg); padding:32px; /* 4 x 8px */
+    max-width:460px; width:100%; max-height:85vh; overflow-y:auto;
+    box-shadow:var(--shadow-dark);
+  }
+  .modal-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; } /* 2x8 */
+  .modal-head h3{ font-size:20px; }
+  .modal-close{
+    background:var(--bg-soft-1); border:none; border-radius:50%;
+    width:32px; height:32px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; color:var(--primary-dark);
+  }
+  .modal-close .icon{ width:16px; height:16px; }
+  .modal-close:hover{ background:var(--bg-soft-2); }
+  .modal-intro{ font-size:14px; color:var(--text-muted); line-height:1.6; margin-bottom:24px; } /* 3x8 */
+  .modal-steps{ list-style:none; margin:0 0 24px; padding:0; display:flex; flex-direction:column; gap:16px; } /* 2x8 gap */
+  .modal-steps li{ display:flex; gap:12px; background:var(--bg-soft-1); border-radius:var(--radius-md); padding:16px; } /* 2x8 padding */
+  .modal-step-num{
+    flex-shrink:0; width:28px; height:28px; border-radius:50%; background:var(--primary-dark); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;
+  }
+  .modal-steps strong{ font-size:14px; display:block; margin-bottom:2px; }
+  .modal-steps p{ font-size:13px; color:var(--text-muted); line-height:1.5; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">C</span>
+        <span class="brand-name">CotiApp studio</span>
+      </div>
+      <button type="button" class="topbar-link" data-action="open-how-it-works">Cómo funciona</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <span class="eyebrow-chip">Calculadora para creativos</span>
+      <h1 class="h1" id="heroTitle">Ponele precio a tus ideas, sin vueltas.</h1>
+      <p class="body-text" id="heroSubtitle">Elegí tu disciplina y completá los detalles específicos para obtener una estimación clara.</p>
+    </div>
+  </section>
+
+  <main class="container">
+
+    <!-- =====================================================
+         PASO 1 — Solo disciplinas + campos dinámicos + observaciones
+         ===================================================== -->
+    <div class="step-panel active" data-panel="1">
+      <section class="card-main">
+        <div class="card-header-row">
+          <div>
+            <span class="card-eyebrow">01 — SERVICIO</span>
+            <h2 class="h2">¿Qué vamos a crear?</h2>
+          </div>
+          <div class="step-progress">
+            <div class="step-progress-label"><span>PASO 1 DE 3</span><span>33%</span></div>
+            <div class="step-progress-track"><div class="step-progress-fill" style="width:33%"></div></div>
+          </div>
+        </div>
+
+        <div class="chip-row" id="chipRow">
+          <button type="button" class="chip is-active" data-service="grafico"><span class="icon icon-sm" data-icon="grafico" aria-hidden="true"></span>Diseño Gráfico</button>
+          <button type="button" class="chip" data-service="app"><span class="icon icon-sm" data-icon="app" aria-hidden="true"></span>App Mobile</button>
+          <button type="button" class="chip" data-service="ilustracion"><span class="icon icon-sm" data-icon="ilustracion" aria-hidden="true"></span>Ilustración</button>
+          <button type="button" class="chip" data-service="video"><span class="icon icon-sm" data-icon="video" aria-hidden="true"></span>Videos</button>
+          <button type="button" class="chip" data-service="writing"><span class="icon icon-sm" data-icon="pluma" aria-hidden="true"></span>Writing</button>
+          <button type="button" class="chip" data-service="web"><span class="icon icon-sm" data-icon="web" aria-hidden="true"></span>Diseño Web</button>
+          <button type="button" class="chip" data-service="social"><span class="icon icon-sm" data-icon="cm" aria-hidden="true"></span>Social Media</button>
+        </div>
+
+        <p class="section-title">Detalles del proyecto</p>
+        <div class="field-grid">
+          <div class="field" id="fieldProjectName">
+            <label for="projectName">Tipo de proyecto</label>
+            <input type="text" id="projectName" placeholder="Ingresar tipo de proyecto" maxlength="60">
+            <span class="field-msg"></span>
+          </div>
+          <div class="field" id="fieldComplexity">
+            <label for="complexity">Complejidad</label>
+            <select id="complexity">
+              <option value="" selected disabled>Seleccionar opción</option>
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+            </select>
+            <span class="field-msg"></span>
+          </div>
+          <div class="field" id="fieldClientType">
+            <label for="clientType">Tipo de cliente</label>
+            <select id="clientType">
+              <option value="" selected disabled>Seleccionar opción</option>
+              <option value="particular">Particular</option>
+              <option value="pyme">Pyme</option>
+              <option value="empresa">Empresa</option>
+              <option value="agencia">Agencia</option>
+            </select>
+            <span class="field-msg"></span>
+          </div>
+          <div class="field" id="fieldDeadline">
+            <label for="deadlineWeeks">Plazo estimado (semanas)</label>
+            <input type="number" id="deadlineWeeks" min="1" placeholder="Ingresar semanas">
+            <span class="field-msg"></span>
+          </div>
+          <div class="field" id="fieldCurrency">
+            <label for="currency">Moneda a cotizar</label>
+            <select id="currency">
+              <option value="ARS" selected>Pesos (ARS $)</option>
+              <option value="USD">Dólares (USD)</option>
+              <option value="EUR">Euros (EUR €)</option>
+            </select>
+            <span class="field-msg"></span>
+          </div>
+        </div>
+
+        <p class="section-title" style="margin-top:8px;">Detalles específicos — <span id="disciplineName">Diseño Gráfico</span></p>
+        <div class="field-grid" id="disciplineFieldsGrid"></div>
+        <label class="toggle-row" id="disciplineCheckboxRow"></label>
+
+        <div class="field field-full" style="margin-bottom:24px;">
+          <div class="field-label-row">
+            <label for="observations">Observaciones / detalles del proyecto</label>
+            <button type="button" class="mic-btn" id="micBtn" data-action="toggle-mic">
+              <span class="icon icon-sm" data-icon="mic" aria-hidden="true"></span>
+              <span id="micBtnLabel">Dictar por voz</span>
+            </button>
+          </div>
+          <textarea id="observations" placeholder="Escribí comentarios o usá el micrófono para dictarlos"></textarea>
+          <span class="field-msg" id="micStatus"></span>
+        </div>
+
+        <div class="card-footer">
+          <p class="hint">Podrás ajustar extras en el siguiente paso</p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary" data-action="reset-all">Cancelar</button>
+            <button type="button" class="btn btn-primary" data-action="go-step-2">Guardar y continuar</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card-side">
+        <div class="side-card-header">
+          <h3>Tu estimación</h3>
+          <span class="badge badge-warning">Borrador</span>
+        </div>
+        <p class="side-label">Rango estimado</p>
+        <p class="side-price" id="estimateRange1">$0 / $0</p>
+        <p class="side-note">Impuestos no incluidos</p>
+        <hr class="divider-dark">
+        <ul class="breakdown-list" id="breakdownList1"></ul>
+        <div class="alert alert-dark">
+          <span class="icon" data-icon="info" aria-hidden="true"></span>
+          <span>Estimación orientativa. Definí entregables y revisiones antes de enviar la propuesta.</span>
+        </div>
+        <button type="button" class="btn btn-white-pill" data-action="download-summary">
+          <span class="icon" data-icon="download" aria-hidden="true"></span>Descargar resumen
+        </button>
+      </aside>
+    </div>
+
+    <!-- =====================================================
+         PASO 2 — #upload-box + vista previa del PDF + exportación
+         ===================================================== -->
+    <div class="step-panel" data-panel="2">
+      <section class="card-main">
+        <div class="card-header-row">
+          <div>
+            <span class="card-eyebrow">02 — COTIZACIÓN</span>
+            <h2 class="h2">Identidad de tu empresa</h2>
+          </div>
+          <div class="step-progress">
+            <div class="step-progress-label"><span>PASO 2 DE 3</span><span>66%</span></div>
+            <div class="step-progress-track"><div class="step-progress-fill" style="width:66%"></div></div>
+          </div>
+        </div>
+        <p class="section-help">Subí tu logo para mostrarlo en el PDF final y exportá el presupuesto en el formato que necesites.</p>
+
+        <p class="section-title">Logo de la empresa</p>
+        <p class="section-help">PNG, JPG o SVG de alta resolución. Se mostrará en la portada del PDF y en la cabecera del Excel.</p>
+
+        <div class="dropzone" id="upload-box">
+          <input type="file" id="logoInput" class="visually-hidden" accept="image/png,image/jpeg,image/svg+xml">
+          <div id="dropzoneContent">
+            <div class="folder-illustration" id="folderIllustration"></div>
+            <p class="dropzone-title">Arrastrá tu logo aquí</p>
+            <p class="dropzone-sub">o hacé clic para seleccionar un archivo en formato jpg, png o svg.</p>
+            <button type="button" class="btn btn-secondary" data-action="pick-logo">Seleccioná el archivo</button>
+          </div>
+        </div>
+
+        <p class="section-title">
+          Vista previa del PDF
+          <small>A4 · 210 × 297 mm</small>
+        </p>
+        <div class="pdf-preview">
+          <div class="pdf-preview-head">
+            <div class="pdf-logo-box" id="pdfLogoBox">LOGO</div>
+            <span class="badge badge-warning">Borrador</span>
+          </div>
+          <h4>Presupuesto Cotiza-studio</h4>
+          <p class="muted-line" id="pdfSubtitle">Completá el paso 1 para ver el detalle acá.</p>
+          <hr>
+          <p class="side-label" style="color:var(--text-muted);">Rango estimado</p>
+          <p class="pdf-price" id="pdfPriceRange">$0 / $0</p>
+          <span class="link-note">Impuestos no incluidos</span>
+        </div>
+
+        <div class="card-footer">
+          <p class="hint">Podrás revisar en el próximo paso</p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary" data-action="reset-all">Cancelar</button>
+            <button type="button" class="btn btn-primary" data-action="go-step-3">Guardar y continuar</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card-side">
+        <div class="side-card-header">
+          <h3>Exportar presupuesto</h3>
+          <span class="badge badge-info">3 opciones</span>
+        </div>
+        <p class="side-subtitle">Elegí cómo querés compartir la estimación con tu cliente o tu equipo.</p>
+
+        <div class="export-block">
+          <div class="export-block-head"><strong>Descargar PDF</strong><span class="badge badge-error">PDF</span></div>
+          <p>Documento listo para enviar o adjuntar.</p>
+          <button type="button" class="btn btn-white-pill" data-action="export-pdf">
+            <span class="icon" data-icon="download" aria-hidden="true"></span>Descargar PDF
+          </button>
+        </div>
+        <div class="export-block">
+          <div class="export-block-head"><strong>Copiar texto</strong><span class="badge badge-success">TXT</span></div>
+          <p>Copiá un resumen listo para pegar en un correo.</p>
+          <button type="button" class="btn btn-white-pill" data-action="copy-text">
+            <span class="icon" data-icon="copiar" aria-hidden="true"></span>Copiar texto
+          </button>
+        </div>
+        <div class="export-block">
+          <div class="export-block-head"><strong>Exportar Excel</strong><span class="badge badge-warning">XLS</span></div>
+          <p>Hoja de cálculo con conceptos y rangos.</p>
+          <button type="button" class="btn btn-white-pill" data-action="export-excel">
+            <span class="icon" data-icon="download" aria-hidden="true"></span>Exportar Excel
+          </button>
+        </div>
+
+        <div class="alert alert-dark" style="margin-top:8px;">
+          <span class="icon" data-icon="info" aria-hidden="true"></span>
+          <span>Los archivos se generan con el logo seleccionado y el resumen actual del presupuesto.</span>
+        </div>
+      </aside>
+    </div>
+
+    <!-- =====================================================
+         PASO 3 — Resumen + plantilla de correo editable + envío
+         ===================================================== -->
+    <div class="step-panel" data-panel="3">
+      <section class="card-main">
+        <div class="card-header-row">
+          <div>
+            <span class="card-eyebrow">03 — COTIZACIÓN LISTA</span>
+            <h2 class="h2">Detalles de la propuesta</h2>
+          </div>
+          <div class="step-progress">
+            <div class="step-progress-label"><span>PASO 3 DE 3</span><span>100%</span></div>
+            <div class="step-progress-track"><div class="step-progress-fill" style="width:100%"></div></div>
+          </div>
+        </div>
+
+        <h3 class="summary-title" id="clientHeading">Tu cliente</h3>
+        <p class="summary-sub" id="projectLine">Proyecto: —</p>
+        <p class="summary-sub" id="sentDateLine">Aún no enviado</p>
+
+        <hr class="divider-light">
+
+        <p class="section-title" style="margin-bottom:4px;">Rango de inversión estimado</p>
+        <p class="price-big" id="finalPrice">$0</p>
+        <p class="muted-note">Sujeto a cambios según requerimientos adicionales</p>
+
+        <hr class="divider-light">
+
+        <div class="summary-rows" id="summaryRows"></div>
+
+        <hr class="divider-light">
+
+        <p class="section-title">Plantilla de correo <small>Editable</small></p>
+        <p class="section-help">Editá el mensaje y sumá los datos de tu cliente a mano antes de enviarlo.</p>
+        <div class="mail-fields">
+          <div class="field">
+            <label for="mailSubject">Asunto</label>
+            <input type="text" id="mailSubject">
+          </div>
+          <div class="field">
+            <label for="mailBody">Cuerpo del mensaje</label>
+            <textarea id="mailBody"></textarea>
+          </div>
+        </div>
+        <div class="mail-actions">
+          <button type="button" class="btn btn-text" data-action="regenerate-mail">Regenerar con los datos del proyecto</button>
+        </div>
+
+        <div class="card-footer" style="border-top:none; padding-top:0; justify-content:flex-end;">
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary" data-action="go-step-1">Volver al inicio</button>
+            <button type="button" class="btn btn-primary" data-action="reset-all">Cerrar</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card-side">
+        <h3 style="margin-bottom:8px;">Enviá tu presupuesto por mail</h3>
+        <p class="side-subtitle">Esto abre tu programa de correo predeterminado (Gmail, Outlook, Mail) con el mensaje ya completado. El envío final lo confirmás vos desde ahí.</p>
+
+        <div id="mailForm">
+          <div class="dark-field" id="fieldDesignerName">
+            <label for="designerName">Tu nombre</label>
+            <input type="text" id="designerName" placeholder="Escribí tu nombre">
+            <span class="field-msg"></span>
+          </div>
+          <div class="dark-field" id="fieldClientName">
+            <label for="clientNameInput">Nombre del cliente</label>
+            <input type="text" id="clientNameInput" placeholder="Escribí el nombre del cliente">
+            <span class="field-msg"></span>
+          </div>
+          <div class="dark-field" id="fieldClientEmail">
+            <label for="clientEmail">Email del cliente</label>
+            <input type="email" id="clientEmail" placeholder="nombre@empresa.com">
+            <span class="field-msg"></span>
+          </div>
+          <div class="btn-row" style="flex-direction:column; gap:8px;">
+            <button type="button" class="btn btn-white-pill" data-action="send-mail">Enviar Presupuesto por Mail</button>
+            <button type="button" class="btn btn-secondary on-dark btn-block" data-action="copy-mail">
+              <span class="icon" data-icon="copiar" aria-hidden="true"></span>Copiar mensaje
+            </button>
+          </div>
+        </div>
+        <div id="mailSuccess" style="display:none;">
+          <svg class="success-illustration" width="88" height="88" viewBox="0 0 88 88" fill="none">
+            <circle cx="44" cy="44" r="42" fill="#1D1D20" stroke="#2C2C30" stroke-width="2"/>
+            <circle cx="44" cy="44" r="26" fill="rgba(58,189,35,.14)"/>
+            <circle cx="44" cy="44" r="18" fill="#3ABD23"/>
+            <path d="M37 44.5l5 5 10-11" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+          <div class="alert alert-info">
+            <span class="icon" data-icon="info" aria-hidden="true"></span>
+            <span id="mailSuccessText">Se abrió tu programa de correo.</span>
+          </div>
+          <button type="button" class="btn btn-secondary on-dark btn-block" data-action="edit-mail">Editar datos / enviar de nuevo</button>
+        </div>
+
+        <div class="nested-light-card">
+          <strong>Crear nuevo presupuesto</strong>
+          <p>¿Listo para otra propuesta? Empezá un flujo de cálculo desde cero haciendo <a href="#" data-action="reset-all">clic acá</a>.</p>
+        </div>
+      </aside>
+    </div>
+
+  </main>
+
+  <div class="modal-overlay" id="howItWorksModal">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="howItWorksTitle">
+      <div class="modal-head">
+        <h3 id="howItWorksTitle">¿Cómo funciona CotiApp studio?</h3>
+        <button type="button" class="modal-close" data-action="close-how-it-works" aria-label="Cerrar">
+          <span class="icon" data-icon="alerta" aria-hidden="true"></span>
+        </button>
+      </div>
+      <p class="modal-intro">Es una calculadora pensada para que diseñadores y creativos armen presupuestos claros y profesionales en minutos, adaptados a la disciplina de cada proyecto.</p>
+      <ol class="modal-steps">
+        <li>
+          <span class="modal-step-num">1</span>
+          <div><strong>Elegí tu disciplina</strong><p>Seleccioná el tipo de trabajo, completá los detalles del proyecto y obtené un rango de precio estimado en el momento.</p></div>
+        </li>
+        <li>
+          <span class="modal-step-num">2</span>
+          <div><strong>Sumá tu marca</strong><p>Subí tu logo, previsualizá el PDF final y elegí cómo exportar el presupuesto (PDF, texto o Excel).</p></div>
+        </li>
+        <li>
+          <span class="modal-step-num">3</span>
+          <div><strong>Enviá tu presupuesto</strong><p>Revisá el resumen final, editá la plantilla de correo a tu gusto y compartila con tu cliente.</p></div>
+        </li>
+      </ol>
+      <button type="button" class="btn btn-primary btn-block" data-action="close-how-it-works">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- Librerías para exportación real de archivos (PDF / Excel) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ========================================================
+     0. ICONOGRAFÍA — íconos SVG nativos exactos del UI Kit
+     (stroke cambiado a currentColor para que funcionen también
+     sobre fondos oscuros; los paths son los provistos).
+     ======================================================== */
+    var ICONS = {
+    back: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M18.4641 2.11401C18.3025 2.0293 18.1208 1.99038 17.9388 2.00149C17.7567 2.01259 17.5811 2.07329 17.4311 2.17701L4.43105 11.177C4.29861 11.2694 4.19045 11.3925 4.11576 11.5357C4.04108 11.6789 4.00208 11.838 4.00208 11.9995C4.00208 12.161 4.04108 12.3201 4.11576 12.4633C4.19045 12.6065 4.29861 12.7296 4.43105 12.822L17.4311 21.822C17.5811 21.9258 17.7566 21.9866 17.9387 21.9978C18.1208 22.009 18.3025 21.9701 18.4641 21.8855C18.6257 21.8008 18.7611 21.6735 18.8556 21.5175C18.95 21.3614 19 21.1825 19.0001 21V3.00001C19.0001 2.81748 18.9501 2.63841 18.8557 2.48223C18.7612 2.32605 18.6257 2.19871 18.4641 2.11401ZM17.0001 19.091L6.75705 12L17.0001 4.90901V19.091Z" fill="currentColor"/> </svg>',
+    info: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M9.08956 8.9993C9.32468 8.33091 9.78876 7.76731 10.3996 7.4083C11.0105 7.0493 11.7287 6.91807 12.427 7.03785C13.1253 7.15764 13.7587 7.5207 14.215 8.06275C14.6713 8.6048 14.9211 9.29084 14.92 9.99938C14.92 11.9995 11.9198 12.9996 11.9198 12.9996M11.9999 17.0003H12.0099M22.0007 11.9999C22.0007 17.5232 17.5232 22.0007 11.9999 22.0007C6.47666 22.0007 1.99915 17.5232 1.99915 11.9999C1.99915 6.47666 6.47666 1.99915 11.9999 1.99915C17.5232 1.99915 22.0007 6.47666 22.0007 11.9999Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>',
+    mic: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M12 19.0005V22.0007M4.99921 9.99978V11.9999C4.99921 13.8566 5.73679 15.6372 7.04969 16.9501C8.3626 18.2629 10.1433 19.0005 12 19.0005C13.8567 19.0005 15.6374 18.2629 16.9503 16.9501C18.2632 15.6372 19.0008 13.8566 19.0008 11.9999V9.99978M12 1.99915C13.6571 1.99915 15.0003 3.3424 15.0003 4.99939V11.9999C15.0003 13.6569 13.6571 15.0002 12 15.0002C10.343 15.0002 8.99966 13.6569 8.99966 11.9999V4.99939C8.99966 3.3424 10.343 1.99915 12 1.99915Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>',
+    'mic-off': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M12 19.0005V22.0007M4.99921 9.99978V11.9999C4.99921 13.8566 5.73679 15.6372 7.04969 16.9501C8.3626 18.2629 10.1433 19.0005 12 19.0005C13.8567 19.0005 15.6374 18.2629 16.9503 16.9501C18.2632 15.6372 19.0008 13.8566 19.0008 11.9999V9.99978M12 1.99915C13.6571 1.99915 15.0003 3.3424 15.0003 4.99939V11.9999C15.0003 13.6569 13.6571 15.0002 12 15.0002C10.343 15.0002 8.99966 13.6569 8.99966 11.9999V4.99939C8.99966 3.3424 10.343 1.99915 12 1.99915Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> <line x1="3" y1="2" x2="21" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    cm: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M22 5.00799C21.9998 4.52148 21.8813 4.04231 21.6547 3.6118C21.4281 3.18129 21.1002 2.81235 20.6992 2.53678C20.2983 2.26122 19.8363 2.0873 19.3532 2.03002C18.8701 1.97274 18.3803 2.03382 17.926 2.20799L3.926 7.57399C3.35948 7.7912 2.87214 8.17508 2.52829 8.67497C2.18443 9.17486 2.00024 9.76726 2 10.374V12.54C1.99958 13.1766 2.20166 13.7968 2.57702 14.3109C2.95238 14.8251 3.48155 15.2065 4.088 15.4L6 16.004V18C5.9973 19.0153 6.38081 19.9937 7.0728 20.7367C7.76478 21.4798 8.71343 21.9318 9.72639 22.0013C10.7394 22.0707 11.7408 21.7524 12.5277 21.1107C13.3147 20.4691 13.8281 19.5522 13.964 18.546L18.088 19.862C18.5381 20.0056 19.0157 20.0409 19.482 19.965C19.9483 19.8891 20.3901 19.7041 20.7714 19.4252C21.1526 19.1462 21.4627 18.7812 21.6762 18.3598C21.8897 17.9383 22.0006 17.4724 22 17V5.00799ZM12 17.92V18C12 18.5304 11.7893 19.0391 11.4142 19.4142C11.0391 19.7893 10.5304 20 10 20C9.46957 20 8.96086 19.7893 8.58579 19.4142C8.21071 19.0391 8 18.5304 8 18V16.644L12 17.92ZM18.642 4.07399C18.7935 4.01591 18.9568 3.99556 19.1179 4.01469C19.279 4.03381 19.433 4.09185 19.5667 4.18378C19.7003 4.27571 19.8096 4.39878 19.8851 4.54237C19.9606 4.68596 20 4.84576 20 5.00799V17.004C19.9999 17.1613 19.9627 17.3164 19.8914 17.4566C19.8201 17.5968 19.7167 17.7182 19.5896 17.811C19.4626 17.9037 19.3154 17.9652 19.1602 17.9904C19.0049 18.0156 18.8459 18.0038 18.696 17.956L4.696 13.492C4.49374 13.4274 4.31727 13.3002 4.19214 13.1287C4.06701 12.9572 3.99972 12.7503 4 12.538V10.376C3.99994 10.1736 4.06128 9.97602 4.17591 9.80926C4.29053 9.6425 4.45306 9.51444 4.642 9.44199L18.642 4.07399Z" fill="currentColor"/> </svg>',
+    megafono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2Z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
+    copiar: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M3.99931 16.0003C2.89922 16.0003 1.99915 15.1002 1.99915 14.0001V3.99931C1.99915 2.89922 2.89922 1.99915 3.99931 1.99915H14.0001C15.1002 1.99915 16.0003 2.89922 16.0003 3.99931M9.99979 7.99963H20.0006C21.1052 7.99963 22.0007 8.89513 22.0007 9.99979V20.0006C22.0007 21.1052 21.1052 22.0007 20.0006 22.0007H9.99979C8.89513 22.0007 7.99963 21.1052 7.99963 20.0006V9.99979C7.99963 8.89513 8.89513 7.99963 9.99979 7.99963Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>',
+    pdf: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M19 11V10C19 6.229 19 4.343 17.828 3.172C16.656 2.001 14.771 2 11 2C7.229 2 5.343 2 4.172 3.172C3.001 4.344 3 6.229 3 10V14C3 17.771 3 19.657 4.172 20.828C5.344 21.999 7.229 22 11 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M21 22L19.286 20.286M19.857 17.429C19.8648 17.8842 19.7818 18.3364 19.613 18.7591C19.4442 19.1819 19.1929 19.5668 18.8738 19.8915C18.5547 20.2161 18.1741 20.4739 17.7542 20.6499C17.3344 20.8259 16.8837 20.9166 16.4285 20.9166C15.9733 20.9166 15.5226 20.8259 15.1028 20.6499C14.6829 20.4739 14.3024 20.2161 13.9832 19.8915C13.6641 19.5668 13.4128 19.1819 13.244 18.7591C13.0752 18.3364 12.9922 17.8842 13 17.429C13.0154 16.5299 13.3833 15.6727 14.0246 15.0423C14.6659 14.4119 15.5292 14.0586 16.4285 14.0586C17.3278 14.0586 18.1911 14.4119 18.8324 15.0423C19.4737 15.6727 19.8417 16.5299 19.857 17.429Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> <path d="M7 7H15M7 11H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>',
+    download: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M12 15V3M17 10L12 15L7 10M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>',
+    alerta: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M9 9L12 12M12 12L15 15M12 12L9 15M12 12L15 9M12 21C10.8181 21 9.64778 20.7672 8.55585 20.3149C7.46392 19.8626 6.47177 19.1997 5.63604 18.364C4.80031 17.5282 4.13738 16.5361 3.68508 15.4442C3.23279 14.3522 3 13.1819 3 12C3 10.8181 3.23279 9.64778 3.68508 8.55585C4.13738 7.46392 4.80031 6.47177 5.63604 5.63604C6.47177 4.80031 7.46392 4.13738 8.55585 3.68508C9.64778 3.23279 10.8181 3 12 3C14.3869 3 16.6761 3.94821 18.364 5.63604C20.0518 7.32387 21 9.61305 21 12C21 14.3869 20.0518 16.6761 18.364 18.364C16.6761 20.0518 14.3869 21 12 21Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>',
+    pluma: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M5.07602 17C4.08902 4.54502 12.912 1.01202 19.973 2.22402C20.259 6.35202 18.239 7.89702 14.393 8.61102C15.135 9.38702 16.448 10.364 16.306 11.585C16.206 12.453 15.616 12.88 14.436 13.732C11.85 15.6 8.85402 16.78 5.07602 17Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M4 22C4 15.5 7.848 12.182 10.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>',
+    uxui: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M1.99915 11.9997C1.99868 12.191 2.05307 12.3784 2.15588 12.5397C2.25869 12.701 2.4056 12.8294 2.57919 12.9098L11.1798 16.82C11.439 16.9374 11.7203 16.9981 12.0048 16.9981C12.2894 16.9981 12.5707 16.9374 12.8299 16.82L21.4105 12.9198C21.5875 12.8402 21.7376 12.7108 21.8423 12.5475C21.9471 12.3841 22.0021 12.1938 22.0006 11.9997M1.99915 17C1.99868 17.1913 2.05307 17.3787 2.15588 17.54C2.25869 17.7013 2.4056 17.8297 2.57919 17.91L11.1798 21.8203C11.439 21.9376 11.7203 21.9983 12.0048 21.9983C12.2894 21.9983 12.5707 21.9376 12.8299 21.8203L21.4105 17.92C21.5875 17.8405 21.7376 17.7111 21.8423 17.5477C21.9471 17.3844 22.0021 17.1941 22.0006 17M12.8304 2.17951C12.5698 2.06065 12.2867 1.99915 12.0003 1.99915C11.7139 1.99915 11.4308 2.06065 11.1702 2.17951L2.59964 6.07973C2.42218 6.15798 2.2713 6.28614 2.16537 6.44861C2.05945 6.61107 2.00305 6.80084 2.00305 6.99478C2.00305 7.18873 2.05945 7.37849 2.16537 7.54096C2.2713 7.70342 2.42218 7.83158 2.59964 7.90983L11.1802 11.82C11.4408 11.9389 11.7239 12.0004 12.0103 12.0004C12.2967 12.0004 12.5798 11.9389 12.8404 11.82L21.421 7.91983C21.5984 7.84158 21.7493 7.71342 21.8552 7.55096C21.9612 7.38849 22.0175 7.19873 22.0175 7.00478C22.0175 6.81084 21.9612 6.62107 21.8552 6.45861C21.7493 6.29614 21.5984 6.16798 21.421 6.08973L12.8304 2.17951Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>',
+    clients: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M13 11C13 9.93913 12.5786 8.92172 11.8284 8.17157C11.0783 7.42143 10.0609 7 9 7C7.93913 7 6.92172 7.42143 6.17157 8.17157C5.42143 8.92172 5 9.93913 5 11C5 12.0609 5.42143 13.0783 6.17157 13.8284C6.92172 14.5786 7.93913 15 9 15C10.0609 15 11.0783 14.5786 11.8284 13.8284C12.5786 13.0783 13 12.0609 13 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M11.039 7.55795C10.9128 6.66042 11.0952 5.74665 11.5563 4.96632C12.0173 4.186 12.7297 3.58539 13.5768 3.26289C14.4238 2.94038 15.3553 2.91511 16.2185 3.1912C17.0818 3.4673 17.8257 4.02839 18.3284 4.78256C18.8311 5.53674 19.0628 6.43928 18.9855 7.34233C18.9081 8.24538 18.5264 9.0954 17.9028 9.75315C17.2793 10.4109 16.4508 10.8374 15.5531 10.9627C14.6555 11.088 13.7419 10.9048 12.962 10.443M15 21C15 19.4087 14.3679 17.8825 13.2426 16.7573C12.1174 15.6321 10.5913 15 9 15C7.4087 15 5.88258 15.6321 4.75736 16.7573C3.63214 17.8825 3 19.4087 3 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M21 17C21 15.4087 20.3679 13.8826 19.2426 12.7574C18.1174 11.6321 16.5913 11 15 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>',
+    load: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M12 3V15M7 8L12 3L17 8M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>',
+    next: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M5.53595 21.886C5.6975 21.9707 5.87915 22.0096 6.06123 21.9985C6.24331 21.9874 6.41889 21.9267 6.56895 21.823L19.5689 12.823C19.7014 12.7306 19.8096 12.6075 19.8842 12.4643C19.9589 12.3211 19.9979 12.162 19.9979 12.0005C19.9979 11.839 19.9589 11.6799 19.8842 11.5367C19.8096 11.3935 19.7014 11.2704 19.5689 11.178L6.56895 2.17799C6.41892 2.07418 6.24336 2.01339 6.06126 2.00221C5.87917 1.99102 5.69748 2.02986 5.53588 2.11453C5.37428 2.19919 5.23891 2.32645 5.14445 2.48253C5.04998 2.6386 5.00001 2.81755 4.99995 2.99999L4.99995 21C4.99992 21.1825 5.04985 21.3616 5.14434 21.5178C5.23882 21.6739 5.37425 21.8013 5.53595 21.886ZM6.99995 4.90899L17.2429 12L6.99995 19.091L6.99995 4.90899Z" fill="currentColor"/> </svg>',
+    time: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22Z" stroke="currentColor" stroke-width="1.5"/> <path d="M12.0081 10.508C11.6102 10.508 11.2287 10.666 10.9474 10.9473C10.6661 11.2286 10.5081 11.6102 10.5081 12.008C10.5081 12.4058 10.6661 12.7874 10.9474 13.0687C11.2287 13.35 11.6102 13.508 12.0081 13.508C12.4059 13.508 12.7874 13.35 13.0687 13.0687C13.35 12.7874 13.5081 12.4058 13.5081 12.008C13.5081 11.6102 13.35 11.2286 13.0687 10.9473C12.7874 10.666 12.4059 10.508 12.0081 10.508ZM12.0081 10.508V7M15.0151 15.02L13.0661 13.072" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>',
+    urgent: '<svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M7.64995 20.1516C7.72248 20.0789 7.80861 20.0213 7.90342 19.9819C7.99823 19.9426 8.09987 19.9223 8.20252 19.9222C8.30517 19.9221 8.40683 19.9423 8.5017 19.9815C8.59657 20.0207 8.68278 20.0782 8.75541 20.1508C8.82805 20.2233 8.88569 20.3094 8.92504 20.4043C8.96439 20.4991 8.98468 20.6007 8.98476 20.7034C8.98483 20.806 8.96468 20.9077 8.92546 21.0025C8.88625 21.0974 8.82873 21.1836 8.7562 21.2562L7.58432 22.4281C7.43783 22.5748 7.23906 22.6573 7.03175 22.6575C6.82443 22.6576 6.62555 22.5754 6.47885 22.4289C6.33216 22.2824 6.24966 22.0836 6.24951 21.8763C6.24937 21.669 6.33158 21.4701 6.47807 21.3234L7.64995 20.1516ZM5.69682 18.1984C5.84331 18.0517 6.04208 17.9692 6.24939 17.9691C6.45671 17.9689 6.65559 18.0512 6.80229 18.1977C6.94899 18.3441 7.03148 18.5429 7.03163 18.7502C7.03178 18.9575 6.94956 19.1564 6.80307 19.3031L4.45932 21.6469C4.31283 21.7936 4.11406 21.8761 3.90675 21.8762C3.69943 21.8764 3.50055 21.7941 3.35385 21.6477C3.20715 21.5012 3.12466 21.3024 3.12451 21.0951C3.12444 20.9924 3.14459 20.8908 3.1838 20.7959C3.22302 20.701 3.28054 20.6148 3.35307 20.5422L5.69682 18.1984ZM19.5312 1.5625C20.5672 1.5625 21.5608 1.97405 22.2933 2.70661C23.0259 3.43918 23.4374 4.43275 23.4374 5.46875V6.13906C23.4374 8.41719 22.5312 10.6047 20.9203 12.2172L20.1203 13.0141C20.5126 13.7519 20.658 14.596 20.5351 15.4226C20.4122 16.2492 20.0275 17.0145 19.4374 17.6062L17.7406 19.3016C17.5941 19.448 17.3954 19.5303 17.1882 19.5303C16.9811 19.5303 16.7824 19.448 16.6359 19.3016L15.1609 17.8281C14.7178 18.0634 14.2109 18.1503 13.7148 18.0761C13.2186 18.0018 12.7594 17.7703 12.4046 17.4156L11.839 16.85L10.8062 18.4016C10.7418 18.4975 10.6571 18.578 10.558 18.6373C10.4589 18.6967 10.3479 18.7334 10.233 18.7449C10.118 18.7564 10.002 18.7424 9.89307 18.7038C9.78419 18.6653 9.68516 18.6031 9.60307 18.5219L6.47807 15.3969C6.39628 15.3151 6.33368 15.2161 6.2948 15.1071C6.25592 14.9982 6.24172 14.8819 6.25323 14.7668C6.26474 14.6517 6.30167 14.5406 6.36136 14.4415C6.42105 14.3424 6.50201 14.2578 6.59838 14.1937L8.14838 13.1594L7.58432 12.5953C7.22903 12.2406 6.99704 11.7812 6.9225 11.2847C6.84795 10.7882 6.9348 10.2809 7.17026 9.8375L5.69682 8.36563C5.62407 8.29305 5.56634 8.20684 5.52696 8.11193C5.48757 8.01701 5.4673 7.91526 5.4673 7.8125C5.4673 7.70974 5.48757 7.60799 5.52696 7.51307C5.56634 7.41816 5.62407 7.33195 5.69682 7.25937L7.3937 5.56406C7.98488 4.97327 8.74997 4.58767 9.57655 4.46392C10.4031 4.34017 11.2476 4.48481 11.9859 4.87656L12.7828 4.07969C13.5811 3.2813 14.529 2.64806 15.5721 2.21615C16.6153 1.78424 17.7334 1.56213 18.8624 1.5625H19.5312ZM3.7437 16.2453C3.89019 16.0986 4.08895 16.0161 4.29627 16.016C4.50358 16.0158 4.70247 16.098 4.84916 16.2445C4.99586 16.391 5.07836 16.5898 5.07851 16.7971C5.07865 17.0044 4.99644 17.2033 4.84995 17.35L3.67807 18.5219C3.53158 18.6686 3.33281 18.7511 3.1255 18.7512C2.91818 18.7514 2.7193 18.6691 2.5726 18.5227C2.4259 18.3762 2.34341 18.1774 2.34326 17.9701C2.34312 17.7628 2.42533 17.5639 2.57182 17.4172L3.7437 16.2453ZM16.339 16.7969L17.1874 17.6453L18.3312 16.5016C18.9531 15.8797 19.1499 14.9984 18.9265 14.2094L16.339 16.7969ZM8.2562 14.9641L10.0343 16.7422L10.7124 15.7234L9.27495 14.2859L8.2562 14.9641ZM18.8609 3.125C16.9966 3.1254 15.2088 3.86615 13.8906 5.18438L8.68745 10.3844C8.61469 10.4569 8.55697 10.5432 8.51758 10.6381C8.4782 10.733 8.45793 10.8347 8.45793 10.9375C8.45793 11.0403 8.4782 11.142 8.51758 11.2369C8.55697 11.3318 8.61469 11.4181 8.68745 11.4906L13.5078 16.3125C13.5803 16.3853 13.6665 16.443 13.7615 16.4824C13.8564 16.5217 13.9581 16.542 14.0609 16.542C14.1636 16.542 14.2654 16.5217 14.3603 16.4824C14.4552 16.443 14.5414 16.3853 14.614 16.3125L19.814 11.1109C21.1328 9.79295 21.8741 8.00512 21.8749 6.14063V5.46875C21.8749 4.84715 21.628 4.25101 21.1885 3.81147C20.7489 3.37193 20.1528 3.125 19.5312 3.125H18.8609ZM15.6249 6.64062C15.984 6.64062 16.3396 6.71135 16.6713 6.84877C17.0031 6.98618 17.3045 7.18759 17.5584 7.4415C17.8124 7.69542 18.0138 7.99685 18.1512 8.3286C18.2886 8.66035 18.3593 9.01592 18.3593 9.375C18.3593 9.73408 18.2886 10.0897 18.1512 10.4214C18.0138 10.7531 17.8124 11.0546 17.5584 11.3085C17.3045 11.5624 17.0031 11.7638 16.6713 11.9012C16.3396 12.0386 15.984 12.1094 15.6249 12.1094C14.8997 12.1094 14.2042 11.8213 13.6915 11.3085C13.1787 10.7957 12.8906 10.1002 12.8906 9.375C12.8906 8.6498 13.1787 7.9543 13.6915 7.4415C14.2042 6.92871 14.8997 6.64063 15.6249 6.64062ZM15.6249 8.20313C15.3141 8.20313 15.0161 8.32659 14.7963 8.54636C14.5765 8.76613 14.4531 9.0642 14.4531 9.375C14.4531 9.6858 14.5765 9.98387 14.7963 10.2036C15.0161 10.4234 15.3141 10.5469 15.6249 10.5469C15.9357 10.5469 16.2338 10.4234 16.4536 10.2036C16.6734 9.98387 16.7968 9.6858 16.7968 9.375C16.7968 9.0642 16.6734 8.76613 16.4536 8.54636C16.2338 8.32659 15.9357 8.20313 15.6249 8.20313ZM10.7921 6.07031C10.3911 5.95717 9.9672 5.95297 9.56402 6.05816C9.16085 6.16335 8.79301 6.37411 8.49838 6.66875L7.35463 7.8125L8.20307 8.66094L10.7921 6.07031Z" fill="currentColor"/> </svg>',
+    grafico: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.9992 12.9992L16.6242 6.12515C16.5868 5.93813 16.4966 5.76571 16.3645 5.62821C16.2323 5.49072 16.0636 5.39389 15.8782 5.34915L3.23415 2.02715C3.06758 1.98688 2.89345 1.99009 2.72848 2.03647C2.5635 2.08286 2.41322 2.17086 2.29204 2.29204C2.17086 2.41322 2.08286 2.5635 2.03647 2.72848C1.99009 2.89345 1.98688 3.06758 2.02715 3.23415L5.34915 15.8782C5.39389 16.0636 5.49072 16.2323 5.62821 16.3645C5.76571 16.4966 5.93813 16.5868 6.12515 16.6242L12.9992 17.9992M2.29895 2.29895L9.58495 9.58495M15.706 21.292C15.5185 21.4795 15.2642 21.5848 14.999 21.5848C14.7338 21.5848 14.4795 21.4795 14.292 21.292L12.706 19.706C12.5185 19.5185 12.4132 19.2642 12.4132 18.999C12.4132 18.7338 12.5185 18.4795 12.706 18.292L18.292 12.706C18.4795 12.5185 18.7338 12.4132 18.999 12.4132C19.2642 12.4132 19.5185 12.5185 19.706 12.706L21.292 14.292C21.4795 14.4795 21.5848 14.7338 21.5848 14.999C21.5848 15.2642 21.4795 15.5185 21.292 15.706L15.706 21.292ZM12.9991 10.9991C12.9991 12.1037 12.1037 12.9991 10.9991 12.9991C9.89458 12.9991 8.99915 12.1037 8.99915 10.9991C8.99915 9.89458 9.89458 8.99915 10.9991 8.99915C12.1037 8.99915 12.9991 9.89458 12.9991 10.9991Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    app: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M11.9999 18.0004H12.0099M6.99937 1.99915H17.0005C18.1052 1.99915 19.0007 2.89465 19.0007 3.99931V20.0006C19.0007 21.1052 18.1052 22.0007 17.0005 22.0007H6.99937C5.89468 22.0007 4.99915 21.1052 4.99915 20.0006V3.99931C4.99915 2.89465 5.89468 1.99915 6.99937 1.99915Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>',
+    ilustracion: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M14.0004 6.99942L17.0004 9.99958M5.00056 5.99936V9.99958M19.0003 13.9998V18M10.0005 1.99915V3.99926M7.00053 7.99947H3.00059M21.0003 15.9999H17.0004M11.0005 2.9992H9.0005M21.6401 3.63904L20.3601 2.35897C20.2476 2.24528 20.1137 2.15502 19.966 2.09343C19.8184 2.03184 19.6601 2.00012 19.5001 2.00012C19.3402 2.00012 19.1818 2.03184 19.0342 2.09343C18.8866 2.15502 18.7527 2.24528 18.6401 2.35897L2.36041 18.6399C2.24672 18.7524 2.15648 18.8863 2.09489 19.034C2.0333 19.1816 2.00159 19.3399 2.00159 19.4999C2.00159 19.6599 2.0333 19.8182 2.09489 19.9659C2.15648 20.1135 2.24672 20.2474 2.36041 20.36L3.64038 21.64C3.7522 21.7549 3.88592 21.8463 4.03362 21.9086C4.18133 21.971 4.34004 22.0031 4.50037 22.0031C4.6607 22.0031 4.81941 21.971 4.96712 21.9086C5.11483 21.8463 5.24854 21.7549 5.36036 21.64L21.6401 5.35913C21.755 5.2473 21.8463 5.11358 21.9087 4.96586C21.9711 4.81815 22.0032 4.65943 22.0032 4.49908C22.0032 4.33874 21.9711 4.18002 21.9087 4.0323C21.8463 3.88458 21.755 3.75086 21.6401 3.63904Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>',
+    video: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M16.0003 13.0003L21.2237 16.4823C21.299 16.5324 21.3865 16.5611 21.4768 16.5654C21.5672 16.5698 21.657 16.5495 21.7367 16.5068C21.8165 16.4641 21.8831 16.4006 21.9296 16.323C21.9761 16.2454 22.0007 16.1567 22.0007 16.0663V7.87027C22.0008 7.78229 21.9776 7.69586 21.9335 7.61971C21.8895 7.54356 21.8261 7.48039 21.7498 7.43656C21.6735 7.39274 21.587 7.36982 21.499 7.37012C21.411 7.37042 21.3247 7.39392 21.2487 7.43827L16.0003 10.5003M3.99931 6H14.0001C15.1048 6 16.0003 6.89543 16.0003 8V16C16.0003 17.1046 15.1048 18 14.0001 18H3.99931C2.89465 18 1.99915 17.1046 1.99915 16V8C1.99915 6.89543 2.89465 6 3.99931 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>',
+    web: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M9.99979 4.00085V8.00045M1.99915 8.00045H22.0007M5.99947 4.00085V8.00045M3.99931 4.00085H20.0006C21.1052 4.00085 22.0007 4.8962 22.0007 6.00065V17.9995C22.0007 19.1039 21.1052 19.9993 20.0006 19.9993H3.99931C2.89465 19.9993 1.99915 19.1039 1.99915 17.9995V6.00065C1.99915 4.8962 2.89465 4.00085 3.99931 4.00085Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/> </svg>'
+  };
+
+  function paintIcons(root){
+    (root || document).querySelectorAll('[data-icon]').forEach(function(el){
+      var key = el.getAttribute('data-icon');
+      if (ICONS[key]) el.innerHTML = ICONS[key];
+    });
+  }
+
+  /* Ilustraciones EXACTAS provistas por el usuario para el #upload-box (3 estados) */
+  var ILLUSTRATIONS = {
+    default: '<svg width="104" height="93" viewBox="0 0 104 93" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M48.3658 92.4105C70.6591 92.4105 88.7315 89.4084 88.7315 85.7052C88.7315 82.002 70.6591 79 48.3658 79C26.0724 79 8 82.002 8 85.7052C8 89.4084 26.0724 92.4105 48.3658 92.4105Z" fill="#EAE3FF"/> <path d="M15.8807 84.7798L2.20487 23.6252C1.22924 19.2628 4.27937 15.0255 8.72617 14.567L36.8953 11.6594C39.9562 11.3437 42.7931 13.2977 43.5889 16.2701L45.2685 22.5453L80.0312 18.5889C83.3733 18.2086 86.4416 20.4733 87.063 23.7788L15.8807 84.7798Z" fill="#EAE3FF"/> <path d="M15.4669 86.0233L1.54633 23.7729C1.03891 21.5064 1.52696 19.1244 2.88449 17.2388C4.24124 15.3526 6.34286 14.1348 8.65771 13.8952L36.8269 10.9875C40.2374 10.6357 43.355 12.7848 44.2417 16.0953L45.771 21.8086L79.9561 17.9183C83.6311 17.5002 87.0448 20.02 87.7279 23.654L87.7991 24.0376L87.5035 24.291L15.4669 86.0233ZM8.25425 15.3166C6.54174 15.6346 5.00552 16.6025 3.98048 18.0268C2.84785 19.6001 2.44098 21.5873 2.86366 23.4788L16.2934 83.5372L86.3165 23.5302C85.6093 20.7906 82.9556 18.9358 80.1078 19.26L44.7667 23.2819L42.9368 16.4454C42.2232 13.7785 39.7114 12.0483 36.9646 12.3318L8.79543 15.2395C8.6135 15.2581 8.43227 15.2842 8.25371 15.3174L8.25425 15.3166Z" fill="#2D0E9A"/> <path d="M10.4854 38.5783L15.8801 84.78L88.9186 77.19C93.8222 76.6804 97.4165 72.3413 97.0048 67.4292L93.2969 23.1671L16.8517 30.6785C12.8933 31.0675 10.0244 34.6278 10.4854 38.5783Z" fill="white"/> <path d="M89.7526 77.7506C89.5017 77.7972 89.2468 77.8335 88.9883 77.8609L15.9499 85.4517C15.582 85.4898 15.2527 85.2248 15.2094 84.8586L9.81467 38.6569C9.57099 36.5646 10.1643 34.5091 11.4864 32.8689C12.8072 31.2291 14.6894 30.2128 16.786 30.0068L93.2317 22.4946C93.4117 22.4763 93.5909 22.5316 93.7298 22.6473C93.8687 22.7629 93.9553 22.9302 93.9707 23.1093L97.6786 67.3713C98.0955 72.3525 94.5928 76.8517 89.7526 77.7506ZM16.4738 84.0394L88.85 76.5174C93.3507 76.0497 96.7112 71.9971 96.3332 67.4845L92.6827 23.9047L16.9174 31.3502C15.192 31.525 13.6291 32.3605 12.5371 33.7162C11.4444 35.072 10.9539 36.7712 11.1555 38.5006L16.4733 84.0402L16.4738 84.0394Z" fill="#2D0E9A"/> <rect x="74" y="7" width="30" height="30" rx="15" fill="#C2C9EE"/> <path d="M89 15.25V24.25M85.25 19L89 15.25L92.75 19M95.75 24.25V27.25C95.75 27.6478 95.592 28.0294 95.3107 28.3107C95.0294 28.592 94.6478 28.75 94.25 28.75H83.75C83.3522 28.75 82.9706 28.592 82.6893 28.3107C82.408 28.0294 82.25 27.6478 82.25 27.25V24.25" stroke="#2D0E9A" stroke-width="1.5" stroke-linecap="round"/> </svg>',
+    error: '<svg width="104" height="105" viewBox="0 0 104 105" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M48.3658 104.41C70.6591 104.41 88.7315 101.408 88.7315 97.7052C88.7315 94.002 70.6591 91 48.3658 91C26.0724 91 8 94.002 8 97.7052C8 101.408 26.0724 104.41 48.3658 104.41Z" fill="#EAE3FF"/> <path d="M15.8807 96.7798L2.20487 35.6252C1.22924 31.2628 4.27937 27.0255 8.72617 26.567L36.8953 23.6594C39.9562 23.3437 42.7931 25.2977 43.5889 28.2701L45.2685 34.5453L80.0312 30.5889C83.3733 30.2086 86.4416 32.4733 87.063 35.7788L15.8807 96.7798Z" fill="#EAE3FF"/> <path d="M15.4669 98.0233L1.54633 35.7729C1.03891 33.5064 1.52696 31.1244 2.88449 29.2388C4.24124 27.3526 6.34286 26.1348 8.65771 25.8952L36.8269 22.9875C40.2374 22.6357 43.355 24.7848 44.2417 28.0953L45.771 33.8086L79.9561 29.9183C83.6311 29.5002 87.0448 32.02 87.7279 35.654L87.7991 36.0376L87.5035 36.291L15.4669 98.0233ZM8.25425 27.3166C6.54174 27.6346 5.00552 28.6025 3.98048 30.0268C2.84785 31.6001 2.44098 33.5873 2.86366 35.4788L16.2934 95.5372L86.3165 35.5302C85.6093 32.7906 82.9556 30.9358 80.1078 31.26L44.7667 35.2819L42.9368 28.4454C42.2232 25.7785 39.7114 24.0483 36.9646 24.3318L8.79543 27.2395C8.6135 27.2581 8.43227 27.2842 8.25371 27.3174L8.25425 27.3166Z" fill="#2D0E9A"/> <path d="M10.4854 50.5783L15.8801 96.78L88.9186 89.19C93.8222 88.6804 97.4165 84.3413 97.0048 79.4292L93.2969 35.1671L16.8517 42.6785C12.8933 43.0675 10.0244 46.6278 10.4854 50.5783Z" fill="white"/> <path d="M89.7526 89.7506C89.5017 89.7972 89.2468 89.8335 88.9883 89.8609L15.9499 97.4517C15.582 97.4898 15.2527 97.2248 15.2094 96.8586L9.81467 50.6569C9.57099 48.5646 10.1643 46.5091 11.4864 44.8689C12.8072 43.2291 14.6894 42.2128 16.786 42.0068L93.2317 34.4946C93.4117 34.4763 93.5909 34.5316 93.7298 34.6473C93.8687 34.7629 93.9553 34.9302 93.9707 35.1093L97.6786 79.3713C98.0955 84.3525 94.5928 88.8517 89.7526 89.7506ZM16.4738 96.0394L88.85 88.5174C93.3507 88.0497 96.7112 83.9971 96.3332 79.4845L92.6827 35.9047L16.9174 43.3502C15.192 43.525 13.6291 44.3605 12.5371 45.7162C11.4444 47.072 10.9539 48.7712 11.1555 50.5006L16.4733 96.0402L16.4738 96.0394Z" fill="#2D0E9A"/> <path d="M49.5845 38.9432H49.575C49.2024 38.9378 48.904 38.632 48.9094 38.2586C48.9195 37.5511 49.0012 36.8308 49.1538 36.1165C49.2314 35.7519 49.5906 35.5157 49.9551 35.5973C50.3197 35.675 50.5526 36.0335 50.4743 36.3987C50.3406 37.0259 50.2684 37.6578 50.2603 38.2769C50.2549 38.6468 49.9538 38.9425 49.5852 38.9425L49.5845 38.9432Z" fill="#223675"/> <path d="M64.9387 37.4937C64.4067 37.4937 63.9098 37.3735 63.4595 37.1366C62.65 36.7086 62.0289 35.9558 61.6124 34.8972C61.476 34.5495 61.6468 34.158 61.9931 34.0216C62.3395 33.8859 62.7317 34.0554 62.8688 34.4024C63.1638 35.1517 63.5743 35.6702 64.0894 35.9423C64.46 36.1361 64.9076 36.1901 65.3701 36.0989C65.7353 36.0287 66.0904 36.2643 66.1633 36.6309C66.2349 36.9968 65.9972 37.3513 65.6313 37.4242C65.4018 37.4687 65.1675 37.493 64.9387 37.4937ZM68.0874 34.4402C68.0705 34.4402 68.053 34.4402 68.0361 34.4381C67.6641 34.4105 67.3853 34.0864 67.4136 33.7144C67.4204 33.6267 67.4238 33.5382 67.4238 33.4505C67.4238 32.7038 67.1854 31.9375 66.754 31.2941C66.5549 30.9984 66.3139 30.7169 66.0364 30.4577C65.7643 30.2032 65.7501 29.7758 66.0047 29.5037C66.2599 29.2303 66.6872 29.2161 66.9586 29.4713C67.3103 29.8001 67.6195 30.1606 67.8747 30.5414C68.4547 31.4055 68.774 32.4391 68.774 33.4511C68.774 33.5733 68.7693 33.6942 68.7598 33.8164C68.7335 34.1708 68.4371 34.4402 68.0874 34.4402ZM51.4924 33.042C51.3608 33.042 51.2278 33.0035 51.1116 32.9232C50.8038 32.7126 50.7262 32.292 50.9368 31.9848C51.7024 30.8688 52.6354 29.9183 53.7095 29.1608C53.8627 29.0534 54.0173 28.9501 54.1746 28.8502C54.4926 28.6531 54.9071 28.7463 55.1063 29.0622C55.3048 29.3775 55.2096 29.794 54.8943 29.9932C54.7573 30.0796 54.6209 30.1701 54.4872 30.2639C53.5448 30.9282 52.7245 31.7647 52.0494 32.7477C51.9191 32.9387 51.7071 33.042 51.4924 33.042ZM61.686 31.124H61.6745C61.3011 31.1173 61.0048 30.8101 61.0108 30.4374C61.0196 29.923 61.0419 29.4079 61.0642 28.8921L61.0817 28.4911C60.2635 28.4283 59.427 28.4634 58.6081 28.5977C58.2361 28.6659 57.8925 28.4094 57.8324 28.0421C57.7716 27.6742 58.0201 27.3265 58.388 27.2664C59.292 27.1165 60.2149 27.0727 61.1202 27.1402C61.1202 27.0794 61.1202 27.0193 61.1202 26.9586C61.1202 26.7108 61.1155 26.463 61.106 26.2153C61.0912 25.8426 61.3801 25.528 61.7528 25.5131C62.1106 25.4909 62.4394 25.7872 62.4549 26.1599C62.4664 26.4259 62.4704 26.6919 62.4704 26.9586C62.4704 27.0787 62.4704 27.1989 62.4677 27.3191C62.6082 27.3467 62.7472 27.3771 62.8863 27.4095C63.2488 27.4959 63.4737 27.8592 63.3879 28.2224C63.3015 28.5849 62.9396 28.8063 62.5751 28.724C62.5251 28.7112 62.4745 28.7003 62.4239 28.6889C62.4198 28.776 62.4158 28.8631 62.4124 28.9501C62.3901 29.4538 62.3685 29.9574 62.3597 30.459C62.353 30.8283 62.0525 31.1227 61.6846 31.1227L61.686 31.124ZM60.9744 22.6945C60.6956 22.6945 60.435 22.521 60.3378 22.2429C59.8881 20.9635 59.2589 19.7517 58.467 18.6378C58.2517 18.334 58.3225 17.9127 58.6263 17.696C58.9301 17.4806 59.3514 17.5522 59.5681 17.8553C60.4323 19.0712 61.1202 20.3971 61.611 21.7953C61.7352 22.147 61.5496 22.5325 61.1979 22.6554C61.1243 22.6817 61.0487 22.6939 60.9744 22.6939V22.6945Z" fill="#223675"/> <path d="M56.0649 15.8199C55.9191 15.8199 55.7726 15.7733 55.6498 15.6761C55.1407 15.2777 54.6027 14.9159 54.0511 14.5999C53.7277 14.4149 53.615 14.0025 53.7999 13.6791C53.9849 13.3557 54.3981 13.2423 54.7208 13.4279C55.3291 13.7763 55.9218 14.1746 56.4815 14.6134C56.7758 14.843 56.8272 15.2676 56.5969 15.5606C56.4639 15.7307 56.2655 15.8199 56.0649 15.8199Z" fill="#223675"/> <path d="M51.8798 13.8215C53.7046 13.8215 55.1838 12.3423 55.1838 10.5175C55.1838 8.69276 53.7046 7.2135 51.8798 7.2135C50.0551 7.2135 48.5758 8.69276 48.5758 10.5175C48.5758 12.3423 50.0551 13.8215 51.8798 13.8215Z" fill="#223675"/> <path d="M53.3901 8.38548L54.2226 2.19671C54.4521 0.487324 56.2864 -0.496992 57.8378 0.256435C59.5188 1.07332 59.7666 3.36736 58.2975 4.52316L53.3908 8.38481L53.3901 8.38548Z" fill="#E3EAFA"/> <path d="M49.9437 12.2715L43.8987 13.8371C42.2291 14.2698 41.471 16.2081 42.4047 17.6582C43.416 19.2299 45.7235 19.2009 46.6957 17.6049L49.9437 12.2715Z" fill="#E3EAFA"/> <rect x="76" y="19" width="28" height="28" rx="14" fill="#C2C9EE"/> <path d="M77.0566 27.6747C79.9985 20.5255 88.1775 17.1155 95.3256 20.0563C102.475 22.9981 105.886 31.1772 102.944 38.3253C100.002 45.4745 91.8231 48.8844 84.6739 45.9437C77.5258 43.0029 74.1159 34.8228 77.0566 27.6747Z" fill="#FEA796"/> <path d="M95.503 27.0931L84.457 38.9068L85.3591 37.942" fill="#FF674A"/> <path d="M95.503 27.0931L84.457 38.9068L85.3591 37.942" stroke="#FF674A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> <path d="M95.3808 38.5224L83.5671 27.4775L84.532 28.3796" fill="#FF674A"/> <path d="M95.3808 38.5224L83.5671 27.4775L84.532 28.3796" stroke="#FF674A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>',
+    success: '<svg width="109" height="93" viewBox="0 0 109 93" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M48.3658 92.4105C70.6591 92.4105 88.7315 89.4084 88.7315 85.7052C88.7315 82.002 70.6591 79 48.3658 79C26.0724 79 8 82.002 8 85.7052C8 89.4084 26.0724 92.4105 48.3658 92.4105Z" fill="#EAE3FF"/> <path d="M15.8807 84.7798L2.20487 23.6252C1.22924 19.2628 4.27937 15.0255 8.72617 14.567L36.8953 11.6594C39.9562 11.3437 42.7931 13.2977 43.5889 16.2701L45.2685 22.5453L80.0312 18.5889C83.3733 18.2086 86.4416 20.4733 87.063 23.7788L15.8807 84.7798Z" fill="#EAE3FF"/> <path d="M15.4669 86.0233L1.54633 23.7729C1.03891 21.5064 1.52696 19.1244 2.88449 17.2388C4.24124 15.3526 6.34286 14.1348 8.65771 13.8952L36.8269 10.9875C40.2374 10.6357 43.355 12.7848 44.2417 16.0953L45.771 21.8086L79.9561 17.9183C83.6311 17.5002 87.0448 20.02 87.7279 23.654L87.7991 24.0376L87.5035 24.291L15.4669 86.0233ZM8.25425 15.3166C6.54174 15.6346 5.00552 16.6025 3.98048 18.0268C2.84785 19.6001 2.44098 21.5873 2.86366 23.4788L16.2934 83.5372L86.3165 23.5302C85.6093 20.7906 82.9556 18.9358 80.1078 19.26L44.7667 23.2819L42.9368 16.4454C42.2232 13.7785 39.7114 12.0483 36.9646 12.3318L8.79543 15.2395C8.6135 15.2581 8.43227 15.2842 8.25371 15.3174L8.25425 15.3166Z" fill="#2D0E9A"/> <path d="M10.4854 38.5783L15.8801 84.78L88.9186 77.19C93.8222 76.6804 97.4165 72.3413 97.0048 67.4292L93.2969 23.1671L16.8517 30.6785C12.8933 31.0675 10.0244 34.6278 10.4854 38.5783Z" fill="white"/> <path d="M89.7526 77.7506C89.5017 77.7972 89.2468 77.8335 88.9883 77.8609L15.9499 85.4517C15.582 85.4898 15.2527 85.2248 15.2094 84.8586L9.81467 38.6569C9.57099 36.5646 10.1643 34.5091 11.4864 32.8689C12.8072 31.2291 14.6894 30.2128 16.786 30.0068L93.2317 22.4946C93.4117 22.4763 93.5909 22.5316 93.7298 22.6473C93.8687 22.7629 93.9553 22.9302 93.9707 23.1093L97.6786 67.3713C98.0955 72.3525 94.5928 76.8517 89.7526 77.7506ZM16.4738 84.0394L88.85 76.5174C93.3507 76.0497 96.7112 71.9971 96.3332 67.4845L92.6827 23.9047L16.9174 31.3502C15.192 31.525 13.6291 32.3605 12.5371 33.7162C11.4444 35.072 10.9539 36.7712 11.1555 38.5006L16.4733 84.0402L16.4738 84.0394Z" fill="#2D0E9A"/> <rect x="69.958" y="12.6511" width="30" height="30" rx="15" transform="rotate(-18.8506 69.958 12.6511)" fill="#C2C9EE"/> <path d="M74.4162 17.7234C76.7779 9.66908 85.2218 5.05444 93.2762 7.4161C101.331 9.77777 105.946 18.2215 103.584 26.2764C101.223 34.3308 92.7787 38.9454 84.7238 36.584C76.6694 34.2223 72.054 25.778 74.4162 17.7234Z" fill="#DDFB70"/> <path d="M93.4643 17.2567C93.7512 16.8772 94.2913 16.804 94.669 17.0889L94.6681 17.0893C95.0243 17.3576 95.1119 17.8487 94.8863 18.2211L94.8368 18.2937L87.4228 28.1143C87.3185 28.2524 87.1759 28.3544 87.0139 28.4098C86.9627 28.4272 86.9082 28.4403 86.8514 28.4477L86.8517 28.4486C86.6528 28.4752 86.4518 28.4317 86.2829 28.3271L86.2124 28.2778L82.0494 25.0793C81.6729 24.7899 81.6024 24.2499 81.8915 23.8732L81.9482 23.8064C82.2474 23.488 82.744 23.4442 83.0973 23.7144L83.0976 23.7153L86.5724 26.3852L93.4643 17.2567Z" fill="#3ABD23" stroke="#3ABD23" stroke-width="0.5"/> </svg>'
+  };
+
+  /* ========================================================
+     1. CONFIGURACIÓN DE DISCIPLINAS — inputs y checkbox exactos
+     que se muestran para cada pestaña de servicio.
+     ======================================================== */
+  var DISCIPLINE_CONFIG = {
+    grafico: {
+      label:'Diseño Gráfico',
+      field1:{ label:'Cantidad de piezas gráficas a realizar', type:'number', min:1, placeholder:'Ej: 5' },
+      field2:{ label:'Cantidad de correcciones/revisiones incluidas', type:'number', min:0, placeholder:'Ej: 2' },
+      checkbox:{ label:'Incluye archivos editables y variantes vectoriales', sub:'1 color, 2 colores, negativo, blanco, negro, blanco y negro', extra:35000 }
+    },
+    app: {
+      label:'App Mobile',
+      field1:{ label:'Cantidad de pantallas a diseñar', type:'number', min:1, placeholder:'Ej: 8' },
+      field2:{ label:'Complejidad de los flujos', type:'select', options:[['baja','Baja'],['media','Media'],['alta','Alta']] },
+      checkbox:{ label:'Diseño optimizado y adaptado nativamente para ambas plataformas', sub:'iOS y Android', extraMultiplier:1.35 }
+    },
+    ilustracion: {
+      label:'Ilustración',
+      field1:{ label:'Cantidad de ilustraciones', type:'number', min:1, placeholder:'Ej: 3' },
+      field2:{ label:'Estilo y acabado', type:'select', options:[['byn','Blanco y negro'],['color','Color'],['fondo','Con fondo complejo']] },
+      checkbox:{ label:'Incluye cesión de derechos para uso comercial de la obra', extraMultiplier:1.4 }
+    },
+    video: {
+      label:'Videos',
+      field1:{ label:'Duración estimada del video (en segundos)', type:'number', min:1, placeholder:'Ej: 30' },
+      field2:null,
+      checkbox:{ label:'Incluye entrega de archivos editables y recursos del proyecto', extra:45000 }
+    },
+    writing: {
+      label:'Writing',
+      field1:{ label:'Cantidad de palabras estimadas', type:'number', min:1, placeholder:'Ej: 800' },
+      field2:null,
+      checkbox:{ label:'Incluye optimización SEO básica y hasta 3 cambios en el texto', extra:15000 }
+    },
+    web: {
+      label:'Diseño Web',
+      field1:{ label:'Cantidad de páginas / secciones de la web', type:'number', min:1, placeholder:'Ej: 5' },
+      field2:null,
+      checkbox:{ label:'Incluye versión responsive (Mobile/Tablet) y un sistema básico de diseño (UI Kit)', extra:150000, icon:'uxui' }
+    },
+    social: {
+      label:'Social Media',
+      field1:{ label:'Cantidad de posteos por semana', type:'number', min:1, placeholder:'Ej: 4' },
+      field2:{ label:'Modalidad de contratación', type:'select', options:[['semanal','Semanal'],['mensual','Mensual'],['trimestral','Trimestral']] },
+      checkbox:{ label:'Incluye reportes de analítica mensuales y monitoreo básico', extra:30000 }
+    }
+  };
+
+  /* ========================================================
+     2. ESTADO GLOBAL — sin campos inventados (sin nombre de
+     proyecto, sin plazo en semanas, sin selector de moneda)
+     ======================================================== */
+  var state = {
+    step: 1,
+    service: 'grafico',
+    projectName: '',
+    complexity: '',
+    clientType: '',
+    deadlineWeeks: '',
+    currency: 'ARS',
+    field1: '',
+    field2: '',
+    checkboxOn: false,
+    observations: '',
+    logoDataUrl: null,
+    logoFileName: '',
+    designerName: '',
+    clientName: '',
+    clientEmail: '',
+    sentDate: null,
+    mailSubject: null,
+    mailBody: null
+  };
+
+  var COMPLEXITY_MULTIPLIER = { baja:0.85, media:1, alta:1.35 };
+  var CLIENT_MULTIPLIER = { particular:0.9, pyme:1, empresa:1.2, agencia:1.35 };
+  // Tipos de cambio de referencia (ARS por unidad) — valores de ejemplo para
+  // que el MVP calcule un rango; reemplazalos por tus tipos de cambio reales.
+  var CURRENCY_RATES = { ARS:1, USD:1000, EUR:1080 };
+  var CURRENCY_PREFIX = { ARS:'$', USD:'US$', EUR:'€' };
+
+  /* ========================================================
+     3. CÁLCULO DE LA ESTIMACIÓN (por disciplina)
+     Tarifas de referencia (ARS) — valores de ejemplo para que
+     el MVP calcule un rango; ajustalas a tus tarifas reales.
+     ======================================================== */
+  function optionLabel(fieldCfg, value){
+    if (!fieldCfg || !fieldCfg.options) return '';
+    var found = fieldCfg.options.filter(function(o){ return o[0] === value; })[0];
+    return found ? found[1] : '';
+  }
+
+  function computeEstimate(){
+    var cfg = DISCIPLINE_CONFIG[state.service];
+    var f1 = parseFloat(state.field1) || 0;
+    var items = []; // { label, amount, kind: 'primary'|'secondary'|'extra' }
+    var subtotal = 0;
+
+    if (state.service === 'grafico'){
+      var piezaCost = f1 * 18000;
+      subtotal += piezaCost;
+      items.push({ label: f1 + ' pieza(s) gráfica(s)', amount: piezaCost, kind:'primary' });
+      var correcciones = parseFloat(state.field2) || 0;
+      var extraCorr = Math.max(0, correcciones - 2);
+      if (extraCorr > 0){
+        var correccionesCost = extraCorr * 3500;
+        subtotal += correccionesCost;
+        items.push({ label: extraCorr + ' corrección(es) extra (2 incluidas)', amount: correccionesCost, kind:'secondary' });
+      }
+    } else if (state.service === 'app'){
+      var complexMult = { baja:0.85, media:1, alta:1.4 }[state.field2] || 1;
+      var pantallaCost = f1 * 25000 * complexMult;
+      subtotal += pantallaCost;
+      items.push({ label: f1 + ' pantalla(s) · complejidad ' + (optionLabel(cfg.field2, state.field2) || '—'), amount: pantallaCost, kind:'primary' });
+    } else if (state.service === 'ilustracion'){
+      var estiloMult = { byn:1, color:1.25, fondo:1.6 }[state.field2] || 1;
+      var ilustracionCost = f1 * 20000 * estiloMult;
+      subtotal += ilustracionCost;
+      items.push({ label: f1 + ' ilustración(es) · ' + (optionLabel(cfg.field2, state.field2) || '—'), amount: ilustracionCost, kind:'primary' });
+    } else if (state.service === 'video'){
+      var videoCost = f1 > 0 ? (60000 + f1 * 800) : 0;
+      subtotal += videoCost;
+      items.push({ label: f1 + ' segundo(s) de video', amount: videoCost, kind:'primary' });
+    } else if (state.service === 'writing'){
+      var writingCost = f1 * 35;
+      subtotal += writingCost;
+      items.push({ label: f1 + ' palabra(s) estimadas', amount: writingCost, kind:'primary' });
+    } else if (state.service === 'web'){
+      var pageCost = f1 * 40000;
+      subtotal += pageCost;
+      items.push({ label: f1 + ' página(s)/sección(es)', amount: pageCost, kind:'primary' });
+    } else if (state.service === 'social'){
+      var weekMap = { semanal:1, mensual:4, trimestral:13 };
+      var totalPosts = f1 * (weekMap[state.field2] || 1);
+      var socialCost = totalPosts * 6000;
+      subtotal += socialCost;
+      items.push({ label: totalPosts + ' posteo(s) · modalidad ' + (optionLabel(cfg.field2, state.field2) || '—'), amount: socialCost, kind:'primary' });
+    }
+
+    // Reescala el costo específico de la disciplina según la Complejidad
+    // y el Tipo de cliente elegidos en "Detalles del proyecto"
+    var complexityMult = COMPLEXITY_MULTIPLIER[state.complexity] || 1;
+    var clientMult = CLIENT_MULTIPLIER[state.clientType] || 1;
+    var combinedMult = complexityMult * clientMult;
+    items = items.map(function(it){ return { label: it.label, amount: it.amount * combinedMult, kind: it.kind }; });
+    subtotal = subtotal * combinedMult;
+
+    if (state.checkboxOn && cfg.checkbox){
+      var chk = cfg.checkbox;
+      var chkAmount = 0;
+      if (chk.extraMultiplier){
+        chkAmount = subtotal * (chk.extraMultiplier - 1);
+        subtotal *= chk.extraMultiplier;
+      } else if (chk.extra){
+        chkAmount = chk.extra;
+        subtotal += chk.extra;
+      }
+      items.push({ label: chk.label, amount: chkAmount, kind:'extra' });
+    }
+
+    // Ajuste por plazo: proyectos urgentes (1 semana o menos) suman recargo;
+    // plazos amplios (6 semanas o más) obtienen un pequeño descuento.
+    var weeks = parseInt(state.deadlineWeeks, 10) || 0;
+    if (weeks > 0 && weeks <= 1){
+      var recargo = subtotal * 0.25;
+      subtotal += recargo;
+      items.push({ label:'Recargo por urgencia (plazo de 1 semana)', amount: recargo, kind:'secondary' });
+    } else if (weeks >= 6){
+      var descuento = subtotal * 0.08;
+      subtotal -= descuento;
+      items.push({ label:'Descuento por plazo amplio (6+ semanas)', amount: -descuento, kind:'secondary' });
+    }
+
+    // Conversión de moneda (ARS por defecto)
+    var rate = CURRENCY_RATES[state.currency] || 1;
+    if (rate !== 1){
+      subtotal = subtotal / rate;
+      items = items.map(function(it){ return { label: it.label, amount: it.amount / rate, kind: it.kind }; });
+    }
+
+    var low = subtotal * 0.95;
+    var high = subtotal * 1.12;
+    return { low: low, high: high, subtotal: subtotal, items: items };
+  }
+
+  function formatCurrency(value){
+    var isARS = state.currency === 'ARS' || !state.currency;
+    var rounded = Math.round(value / (isARS ? 10 : 1)) * (isARS ? 10 : 1);
+    var formatted = new Intl.NumberFormat('es-AR').format(rounded);
+    return (CURRENCY_PREFIX[state.currency] || '$') + formatted;
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(ch){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch];
+    });
+  }
+
+  function disciplineLabel(){
+    return DISCIPLINE_CONFIG[state.service].label;
+  }
+
+  function projectDescription(){
+    return (state.projectName && state.projectName.trim()) || disciplineLabel();
+  }
+
+  /* ========================================================
+     4. CAMPOS DINÁMICOS POR DISCIPLINA
+     ======================================================== */
+  function fieldHtml(fieldCfg, key){
+    if (!fieldCfg) return '';
+    var id = 'df_' + key;
+    if (fieldCfg.type === 'select'){
+      var opts = '<option value="" selected disabled>Seleccionar opción</option>' +
+        fieldCfg.options.map(function(o){ return '<option value="' + o[0] + '">' + escapeHtml(o[1]) + '</option>'; }).join('');
+      return '<div class="field" id="wrap_' + key + '"><label for="' + id + '">' + escapeHtml(fieldCfg.label) + '</label><select id="' + id + '">' + opts + '</select><span class="field-msg"></span></div>';
+    }
+    return '<div class="field" id="wrap_' + key + '"><label for="' + id + '">' + escapeHtml(fieldCfg.label) + '</label><input type="number" id="' + id + '" min="' + (fieldCfg.min != null ? fieldCfg.min : 0) + '" placeholder="' + escapeHtml(fieldCfg.placeholder || '') + '"><span class="field-msg"></span></div>';
+  }
+
+  function checkboxPreviewLabel(chk){
+    if (chk.extraMultiplier) return '+' + Math.round((chk.extraMultiplier - 1) * 100) + '%';
+    if (chk.extra) return '+ $' + new Intl.NumberFormat('es-AR').format(chk.extra);
+    return '';
+  }
+
+  function renderDisciplineFields(){
+    var cfg = DISCIPLINE_CONFIG[state.service];
+    document.getElementById('disciplineName').textContent = cfg.label;
+
+    var grid = document.getElementById('disciplineFieldsGrid');
+    grid.innerHTML = fieldHtml(cfg.field1, 'field1') + fieldHtml(cfg.field2, 'field2');
+    grid.style.gridTemplateColumns = cfg.field2 ? 'repeat(2,1fr)' : '1fr';
+
+    var chk = cfg.checkbox;
+    var chkRow = document.getElementById('disciplineCheckboxRow');
+    chkRow.setAttribute('for', 'disciplineCheckbox');
+    chkRow.innerHTML =
+      '<span class="toggle-row-left">' +
+        '<input type="checkbox" id="disciplineCheckbox">' +
+        (chk.icon ? '<span class="icon icon-sm" data-icon="' + chk.icon + '" aria-hidden="true"></span>' : '') +
+        '<span><strong>' + escapeHtml(chk.label) + '</strong>' + (chk.sub ? '<small>' + escapeHtml(chk.sub) + '</small>' : '') + '</span>' +
+      '</span>' +
+      '<span class="toggle-amount">' + checkboxPreviewLabel(chk) + '</span>';
+
+    state.field1 = '';
+    state.field2 = '';
+    state.checkboxOn = false;
+
+    var el1 = document.getElementById('df_field1');
+    if (el1) el1.addEventListener(cfg.field1.type === 'select' ? 'change' : 'input', function(e){ state.field1 = e.target.value; render(); });
+    var el2 = document.getElementById('df_field2');
+    if (el2) el2.addEventListener(cfg.field2 && cfg.field2.type === 'select' ? 'change' : 'input', function(e){ state.field2 = e.target.value; render(); });
+    var chkEl = document.getElementById('disciplineCheckbox');
+    chkEl.addEventListener('change', function(e){ state.checkboxOn = e.target.checked; render(); });
+
+    paintIcons(chkRow);
+    render();
+  }
+
+  /* ========================================================
+     5. PLANTILLA DE CORREO (editable, se arma en el paso 3)
+     ======================================================== */
+  function generateMailTemplate(){
+    var est = computeEstimate();
+    var subject = 'Presupuesto Cotiza-studio para ' + projectDescription();
+    var body =
+      'Hola ' + (state.clientName || '[nombre del cliente]') + ',\n\n' +
+      'Te comparto la estimación para ' + projectDescription().toLowerCase() + ' (' + disciplineLabel() + ').\n\n' +
+      'Rango estimado: ' + formatCurrency(est.low) + ' - ' + formatCurrency(est.high) + '\n' +
+      'Plazo: ' + (state.deadlineWeeks ? state.deadlineWeeks + ' semana(s)' : 'a definir') + '\n\n' +
+      'Adjunto el PDF y el Excel con el detalle completo.\n\n' +
+      'Cualquier consulta quedo atento.\n\n' +
+      'Saludos,\n' + (state.designerName || '[Tu nombre]');
+    return { subject: subject, body: body };
+  }
+
+  function ensureMailTemplateInitialized(force){
+    if (force || state.mailBody === null || state.mailSubject === null){
+      var tpl = generateMailTemplate();
+      state.mailSubject = tpl.subject;
+      state.mailBody = tpl.body;
+      document.getElementById('mailSubject').value = state.mailSubject;
+      document.getElementById('mailBody').value = state.mailBody;
+    }
+  }
+
+  /* ========================================================
+     6. RENDER
+     ======================================================== */
+  function render(){
+    var est = computeEstimate();
+
+    document.getElementById('estimateRange1').textContent = formatCurrency(est.low) + ' / ' + formatCurrency(est.high);
+    document.getElementById('breakdownList1').innerHTML = est.items.map(function(it){
+      return '<li><span>' + escapeHtml(it.label) + '</span><span>' + formatCurrency(it.amount) + '</span></li>';
+    }).join('');
+
+    var pdfParts = [projectDescription(), disciplineLabel()];
+    if (est.items[0]) pdfParts.push(est.items[0].label);
+    document.getElementById('pdfSubtitle').textContent = pdfParts.join(' · ');
+    document.getElementById('pdfPriceRange').textContent = formatCurrency(est.low) + ' / ' + formatCurrency(est.high);
+
+    document.getElementById('clientHeading').textContent = state.clientName || 'Tu cliente';
+    document.getElementById('projectLine').textContent = 'Proyecto: ' + projectDescription() + ' · ' + disciplineLabel();
+    document.getElementById('sentDateLine').textContent = state.sentDate ? 'Enviado el ' + state.sentDate : 'Aún no enviado';
+    document.getElementById('finalPrice').textContent = formatCurrency(est.high);
+
+    var kindLabel = { primary:'Concepto principal', secondary:'Ítem adicional', extra:'Extras incluidos' };
+    document.getElementById('summaryRows').innerHTML = est.items.map(function(it){
+      return '<div><span>' + escapeHtml(kindLabel[it.kind] || 'Ítem') + '</span><span class="' + (it.kind === 'extra' ? 'is-link' : '') + '">' + escapeHtml(it.label) + ' (' + formatCurrency(it.amount) + ')</span></div>';
+    }).join('');
+
+    var pdfLogoBox = document.getElementById('pdfLogoBox');
+    pdfLogoBox.innerHTML = state.logoDataUrl ? '<img src="' + state.logoDataUrl + '" alt="Logo">' : 'LOGO';
+  }
+
+  /* ========================================================
+     7. NAVEGACIÓN
+     ======================================================== */
+  var HERO_COPY = {
+    1: { title:'Ponele precio a tus ideas, sin vueltas.', sub:'Elegí tu disciplina y completá los detalles específicos para obtener una estimación clara.' },
+    2: { title:'Ponele precio a tus ideas, sin vueltas.', sub:'Sumá tu identidad de marca y previsualizá el resultado final.' },
+    3: { title:'¡Todo listo, enviá tu presupuesto!', sub:'Revisá el resumen, editá la plantilla de correo y compartila con tu cliente.' }
+  };
+
+  function goToStep(n){
+    state.step = n;
+    document.querySelectorAll('.step-panel').forEach(function(panel){
+      panel.classList.toggle('active', parseInt(panel.getAttribute('data-panel'), 10) === n);
+    });
+    document.getElementById('heroTitle').textContent = HERO_COPY[n].title;
+    document.getElementById('heroSubtitle').textContent = HERO_COPY[n].sub;
+    if (n === 3) ensureMailTemplateInitialized(false);
+    window.scrollTo({ top:0, behavior:'smooth' });
+    render();
+  }
+
+  /* ========================================================
+     8. VALIDACIÓN
+     ======================================================== */
+  function setFieldError(fieldId, message){
+    var el = document.getElementById(fieldId);
+    el.classList.add('has-error');
+    var msg = el.querySelector('.field-msg');
+    if (msg) msg.textContent = message;
+  }
+  function clearFieldError(fieldId){
+    var el = document.getElementById(fieldId);
+    if (!el) return;
+    el.classList.remove('has-error');
+    var msg = el.querySelector('.field-msg');
+    if (msg) msg.textContent = '';
+  }
+
+  function validateStep1(){
+    var valid = true;
+    clearFieldError('fieldProjectName');
+    clearFieldError('fieldComplexity');
+    clearFieldError('fieldClientType');
+    clearFieldError('fieldDeadline');
+    clearFieldError('wrap_field1');
+    clearFieldError('wrap_field2');
+
+    if (!state.projectName.trim()){ setFieldError('fieldProjectName', 'Este campo es obligatorio'); valid = false; }
+    if (!state.complexity){ setFieldError('fieldComplexity', 'Seleccioná una opción'); valid = false; }
+    if (!state.clientType){ setFieldError('fieldClientType', 'Seleccioná una opción'); valid = false; }
+    if (!state.deadlineWeeks || parseInt(state.deadlineWeeks, 10) < 1){ setFieldError('fieldDeadline', 'Ingresá un plazo válido'); valid = false; }
+
+    var cfg = DISCIPLINE_CONFIG[state.service];
+    ['field1','field2'].forEach(function(key){
+      var fcfg = cfg[key];
+      if (!fcfg) return;
+      var val = state[key];
+      var invalid = fcfg.type === 'select' ? !val : (val === '' || isNaN(parseFloat(val)) || parseFloat(val) < (fcfg.min != null ? fcfg.min : 0));
+      if (invalid){
+        setFieldError('wrap_' + key, fcfg.type === 'select' ? 'Seleccioná una opción' : 'Ingresá un valor válido');
+        valid = false;
+      }
+    });
+    return valid;
+  }
+
+  function validateMailForm(){
+    clearFieldError('fieldDesignerName');
+    clearFieldError('fieldClientName');
+    clearFieldError('fieldClientEmail');
+    var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var designerOk = state.designerName.trim().length > 0;
+    var clientNameOk = state.clientName.trim().length > 0;
+    var emailOk = emailRe.test(state.clientEmail.trim());
+
+    if (!designerOk) setFieldError('fieldDesignerName', 'Ingresá tu nombre');
+    if (!clientNameOk) setFieldError('fieldClientName', 'Ingresá el nombre del cliente');
+    if (!emailOk){
+      setFieldError('fieldClientEmail', 'Verificá el email del cliente');
+      showToast('Error: El mail no llegó. Verifica los datos del remitente.');
+    }
+    return designerOk && clientNameOk && emailOk;
+  }
+
+  /* ========================================================
+     9. TOAST
+     ======================================================== */
+  function showToast(message){
+    var existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    var toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = '<span class="icon" data-icon="alerta" aria-hidden="true"></span><span>' + escapeHtml(message) + '</span>';
+    document.body.appendChild(toast);
+    paintIcons(toast);
+    requestAnimationFrame(function(){ toast.classList.add('is-visible'); });
+    setTimeout(function(){
+      toast.classList.remove('is-visible');
+      setTimeout(function(){ toast.remove(); }, 300);
+    }, 4200);
+  }
+
+  /* ========================================================
+     10. RESETEO
+     ======================================================== */
+  function resetAll(){
+    state = {
+      step:1, service:'grafico', projectName:'', complexity:'', clientType:'', deadlineWeeks:'', currency:'ARS',
+      field1:'', field2:'', checkboxOn:false, observations:'',
+      logoDataUrl:null, logoFileName:'', designerName:'', clientName:'', clientEmail:'',
+      sentDate:null, mailSubject:null, mailBody:null
+    };
+    document.getElementById('projectName').value = '';
+    document.getElementById('complexity').value = '';
+    document.getElementById('clientType').value = '';
+    document.getElementById('deadlineWeeks').value = '';
+    document.getElementById('currency').value = 'ARS';
+    document.getElementById('observations').value = '';
+    document.getElementById('designerName').value = '';
+    document.getElementById('clientNameInput').value = '';
+    document.getElementById('clientEmail').value = '';
+    document.getElementById('mailSubject').value = '';
+    document.getElementById('mailBody').value = '';
+    document.querySelectorAll('.chip').forEach(function(c){
+      c.classList.toggle('is-active', c.getAttribute('data-service') === 'grafico');
+    });
+    resetUploadBox();
+    document.getElementById('mailForm').style.display = '';
+    document.getElementById('mailSuccess').style.display = 'none';
+    stopRecording();
+    setMicStatus('');
+    renderDisciplineFields();
+    goToStep(1);
+  }
+
+  function resetUploadBox(){
+    var dz = document.getElementById('upload-box');
+    dz.classList.remove('is-error','is-success','is-dragover');
+    document.getElementById('dropzoneContent').innerHTML =
+      '<div class="folder-illustration" id="folderIllustration"></div>' +
+      '<p class="dropzone-title">Arrastrá tu logo aquí</p>' +
+      '<p class="dropzone-sub">o hacé clic para seleccionar un archivo en formato jpg, png o svg.</p>' +
+      '<button type="button" class="btn btn-secondary" data-action="pick-logo">Seleccioná el archivo</button>';
+    document.getElementById('folderIllustration').innerHTML = ILLUSTRATIONS.default;
+  }
+
+  /* ========================================================
+     11. EXPORTACIONES: TXT / PDF / EXCEL / CLIPBOARD
+     ======================================================== */
+  function buildSummaryText(){
+    var est = computeEstimate();
+    var lines = [
+      'PRESUPUESTO — COTIAPP STUDIO',
+      '================================',
+      'Proyecto: ' + projectDescription(),
+      'Disciplina: ' + disciplineLabel(),
+      'Complejidad: ' + (state.complexity || '—'),
+      'Tipo de cliente: ' + (state.clientType || '—'),
+      'Plazo estimado: ' + (state.deadlineWeeks ? state.deadlineWeeks + ' semana(s)' : '—'),
+      'Moneda: ' + state.currency,
+      '',
+      'RANGO ESTIMADO: ' + formatCurrency(est.low) + ' - ' + formatCurrency(est.high),
+      'Impuestos no incluidos',
+      '',
+      'Detalle:'
+    ];
+    est.items.forEach(function(it){ lines.push('- ' + it.label + ': ' + formatCurrency(it.amount)); });
+    if (state.observations) lines.push('', 'Observaciones: ' + state.observations);
+    return lines.join('\n');
+  }
+
+  function downloadBlob(content, filename, mime){
+    var blob = new Blob([content], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function exportPDF(){
+    try{
+      var jsPDFRef = window.jspdf && window.jspdf.jsPDF;
+      if (!jsPDFRef){ throw new Error('jsPDF no disponible'); }
+      var est = computeEstimate();
+      var doc = new jsPDFRef();
+
+      if (state.logoDataUrl){
+        try{ doc.addImage(state.logoDataUrl, 'PNG', 15, 12, 24, 24); }catch(e){ /* formato no soportado, se omite */ }
+      }
+      doc.setFontSize(18);
+      doc.text('Presupuesto Cotiza-studio', 45, 22);
+      doc.setFontSize(11);
+      doc.text(projectDescription() + ' — ' + disciplineLabel(), 45, 30);
+
+      doc.setFontSize(13);
+      doc.text('Rango estimado: ' + formatCurrency(est.low) + ' / ' + formatCurrency(est.high), 15, 50);
+      doc.setFontSize(10);
+      doc.text('Impuestos no incluidos', 15, 57);
+
+      var y = 70;
+      doc.setFontSize(12);
+      doc.text('Detalle del presupuesto', 15, y); y += 8;
+      doc.setFontSize(10);
+      est.items.forEach(function(it){ doc.text(it.label + ': ' + formatCurrency(it.amount), 15, y); y += 7; });
+      if (state.observations){ y += 5; doc.text('Observaciones:', 15, y); y += 6; doc.text(doc.splitTextToSize(state.observations, 180), 15, y); }
+
+      doc.save('presupuesto-cotiapp.pdf');
+    }catch(err){
+      console.error(err);
+      alert('No se pudo generar el PDF (revisá tu conexión a internet para cargar la librería). Podés usar "Descargar resumen" como alternativa.');
+    }
+  }
+
+  function exportExcel(){
+    try{
+      if (!window.XLSX){ throw new Error('SheetJS no disponible'); }
+      var est = computeEstimate();
+      var rows = [['Concepto', 'Monto']];
+      est.items.forEach(function(it){ rows.push([it.label, formatCurrency(it.amount)]); });
+      rows.push(['Rango estimado', formatCurrency(est.low) + ' - ' + formatCurrency(est.high)]);
+
+      var ws = XLSX.utils.aoa_to_sheet(rows);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Presupuesto');
+      XLSX.writeFile(wb, 'presupuesto-cotiapp.xlsx');
+    }catch(err){
+      console.error(err);
+      alert('No se pudo generar el Excel (revisá tu conexión a internet para cargar la librería).');
+    }
+  }
+
+  function copyToClipboard(text, actionKey, tempLabel){
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        flashButtonLabel(actionKey, tempLabel);
+      }).catch(function(){
+        window.prompt('Copiá el texto manualmente (Ctrl/Cmd+C):', text);
+      });
+    } else {
+      window.prompt('Copiá el texto manualmente (Ctrl/Cmd+C):', text);
+    }
+  }
+
+  function flashButtonLabel(action, tempLabel){
+    var btn = document.querySelector('[data-action="' + action + '"]');
+    if (!btn) return;
+    var original = btn.innerHTML;
+    btn.textContent = tempLabel;
+    setTimeout(function(){ btn.innerHTML = original; }, 1600);
+  }
+
+  /* ========================================================
+     12. #upload-box — carga por click o drag & drop
+     ======================================================== */
+  function handleLogoFile(file){
+    var dz = document.getElementById('upload-box');
+    if (!file){ return; }
+    var validTypes = ['image/png','image/jpeg','image/svg+xml'];
+    if (validTypes.indexOf(file.type) === -1){
+      dz.classList.remove('is-success'); dz.classList.add('is-error');
+      document.getElementById('dropzoneContent').innerHTML =
+        '<div class="folder-illustration">' + ILLUSTRATIONS.error + '</div>' +
+        '<p class="dropzone-title">Error al cargar el archivo</p>' +
+        '<p class="dropzone-sub">Volvé a intentarlo. Recordá que el formato correcto es jpg, png o svg.</p>' +
+        '<button type="button" class="btn btn-secondary" data-action="pick-logo">Seleccioná el archivo</button>';
+      showToast('El archivo no es válido. Usá formato jpg, png o svg.');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e){
+      state.logoDataUrl = e.target.result;
+      state.logoFileName = file.name;
+      dz.classList.remove('is-error'); dz.classList.add('is-success');
+      document.getElementById('dropzoneContent').innerHTML =
+        '<div class="folder-illustration">' + ILLUSTRATIONS.success + '</div>' +
+        '<p class="dropzone-title">Archivo ' + escapeHtml(file.name) + ' cargado con éxito</p>' +
+        '<button type="button" class="btn btn-secondary" data-action="pick-logo">Cambiar archivo</button>';
+      render();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ========================================================
+     13. DICTADO POR VOZ — REAL, con la Web Speech API del
+     navegador (SpeechRecognition / webkitSpeechRecognition).
+     No hay backend: el reconocimiento corre 100% en el cliente.
+     Soportado en Chrome y Edge de escritorio; en navegadores sin
+     soporte se avisa y no se simula nada.
+     ======================================================== */
+  var recognition = null;
+  var isRecording = false;
+  var recordingBaseText = '';
+
+  function getSpeechRecognitionCtor(){
+    return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  }
+
+  function setMicStatus(text, isError){
+    var el = document.getElementById('micStatus');
+    el.textContent = text || '';
+    el.style.color = isError ? 'var(--error)' : 'var(--text-muted)';
+  }
+
+  function setMicButtonState(recording){
+    var btn = document.getElementById('micBtn');
+    var icon = btn.querySelector('.icon');
+    var label = document.getElementById('micBtnLabel');
+    btn.classList.toggle('is-recording', recording);
+    icon.innerHTML = ICONS[recording ? 'mic-off' : 'mic'];
+    label.textContent = recording ? 'Detener' : 'Dictar por voz';
+  }
+
+  function startRecording(){
+    // El micrófono requiere un "contexto seguro" (https o localhost). Si el
+    // archivo se abrió directamente con doble clic (file://), el navegador
+    // bloquea el acceso al micrófono sin avisar claramente por qué.
+    if (!window.isSecureContext){
+      setMicStatus('Tu navegador bloquea el micrófono porque este archivo se abrió como file:// (doble clic). Subilo a un hosting (o abrilo desde un servidor local/https) para que el dictado funcione.', true);
+      return;
+    }
+    var Ctor = getSpeechRecognitionCtor();
+    if (!Ctor){
+      setMicStatus('Tu navegador no soporta dictado por voz. Probá con Chrome o Edge en escritorio.', true);
+      return;
+    }
+    recordingBaseText = document.getElementById('observations').value;
+    recognition = new Ctor();
+    recognition.lang = 'es-AR';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onstart = function(){
+      isRecording = true;
+      setMicButtonState(true);
+      setMicStatus('Escuchando… hablá con naturalidad.', false);
+    };
+    recognition.onresult = function(event){
+      var finalText = '';
+      var interimText = '';
+      for (var i = 0; i < event.results.length; i++){
+        var transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalText += transcript + ' ';
+        else interimText += transcript;
+      }
+      var separator = recordingBaseText && !/\s$/.test(recordingBaseText) ? ' ' : '';
+      var combined = (recordingBaseText + separator + finalText + interimText).trim();
+      document.getElementById('observations').value = combined;
+      state.observations = combined;
+    };
+    recognition.onerror = function(event){
+      var messages = {
+        'not-allowed': 'Permitile a tu navegador usar el micrófono para poder dictar (revisá el ícono de candado/micrófono en la barra de direcciones).',
+        'no-speech': 'No se detectó voz. Probá hablar más cerca del micrófono.',
+        'audio-capture': 'No se encontró ningún micrófono disponible en este dispositivo.',
+        'network': 'Sin conexión: el reconocimiento de voz de Chrome necesita internet para funcionar.',
+        'service-not-allowed': 'El navegador bloqueó el servicio de reconocimiento de voz.',
+        'aborted': ''
+      };
+      var msg = messages.hasOwnProperty(event.error) ? messages[event.error] : ('Ocurrió un error con el dictado por voz (' + event.error + ').');
+      if (msg) setMicStatus(msg, true);
+      stopRecording();
+    };
+    recognition.onend = function(){
+      if (isRecording){
+        recordingBaseText = document.getElementById('observations').value;
+        setMicStatus('Dictado detenido.', false);
+      }
+      isRecording = false;
+      setMicButtonState(false);
+    };
+
+    try{ recognition.start(); }
+    catch(e){ setMicStatus('No se pudo iniciar el micrófono.', true); }
+  }
+
+  function stopRecording(){
+    if (recognition && isRecording){
+      try{ recognition.stop(); }catch(e){}
+    }
+    isRecording = false;
+    setMicButtonState(false);
+  }
+
+  function toggleMic(){
+    if (isRecording) stopRecording();
+    else startRecording();
+  }
+
+  /* ========================================================
+     14. MODAL — Cómo funciona
+     ======================================================== */
+  function openHowItWorks(){
+    var modal = document.getElementById('howItWorksModal');
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+  function closeHowItWorks(){
+    var modal = document.getElementById('howItWorksModal');
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  document.getElementById('howItWorksModal').addEventListener('click', function(e){
+    if (e.target === this) closeHowItWorks();
+  });
+
+  /* ========================================================
+     15. EVENTOS
+     ======================================================== */
+  document.addEventListener('DOMContentLoaded', function(){
+    paintIcons(document);
+    renderDisciplineFields();
+    document.getElementById('folderIllustration').innerHTML = ILLUSTRATIONS.default;
+
+    if (!window.isSecureContext || !getSpeechRecognitionCtor()){
+      setMicStatus(
+        !getSpeechRecognitionCtor()
+          ? 'Este navegador no soporta dictado por voz (probá Chrome o Edge de escritorio).'
+          : 'El dictado por voz no va a funcionar abriendo el archivo directamente. Subilo a un hosting (https) o abrilo desde un servidor local.',
+        true
+      );
+    }
+
+    document.getElementById('chipRow').addEventListener('click', function(e){
+      var chip = e.target.closest('.chip');
+      if (!chip) return;
+      document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('is-active'); });
+      chip.classList.add('is-active');
+      state.service = chip.getAttribute('data-service');
+      renderDisciplineFields();
+    });
+
+    document.getElementById('projectName').addEventListener('input', function(e){ state.projectName = e.target.value; render(); });
+    document.getElementById('complexity').addEventListener('change', function(e){ state.complexity = e.target.value; render(); });
+    document.getElementById('clientType').addEventListener('change', function(e){ state.clientType = e.target.value; render(); });
+    document.getElementById('deadlineWeeks').addEventListener('input', function(e){ state.deadlineWeeks = e.target.value; render(); });
+    document.getElementById('currency').addEventListener('change', function(e){ state.currency = e.target.value; render(); });
+    document.getElementById('observations').addEventListener('input', function(e){ state.observations = e.target.value; });
+
+    document.getElementById('designerName').addEventListener('input', function(e){ state.designerName = e.target.value; render(); });
+    document.getElementById('clientNameInput').addEventListener('input', function(e){ state.clientName = e.target.value; render(); });
+    document.getElementById('clientEmail').addEventListener('input', function(e){ state.clientEmail = e.target.value; });
+
+    document.getElementById('mailSubject').addEventListener('input', function(e){ state.mailSubject = e.target.value; });
+    document.getElementById('mailBody').addEventListener('input', function(e){ state.mailBody = e.target.value; });
+
+    var logoInput = document.getElementById('logoInput');
+    document.getElementById('upload-box').addEventListener('click', function(e){
+      if (e.target.tagName !== 'INPUT') logoInput.click();
+    });
+    logoInput.addEventListener('change', function(e){ handleLogoFile(e.target.files[0]); });
+
+    var dz = document.getElementById('upload-box');
+    ['dragenter','dragover'].forEach(function(evt){
+      dz.addEventListener(evt, function(e){ e.preventDefault(); dz.classList.add('is-dragover'); });
+    });
+    ['dragleave','drop'].forEach(function(evt){
+      dz.addEventListener(evt, function(e){ e.preventDefault(); dz.classList.remove('is-dragover'); });
+    });
+    dz.addEventListener('drop', function(e){
+      var file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file) handleLogoFile(file);
+    });
+
+    document.body.addEventListener('click', function(e){
+      var btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      var action = btn.getAttribute('data-action');
+
+      switch(action){
+        case 'go-step-2':
+          if (validateStep1()) goToStep(2);
+          break;
+        case 'go-step-3':
+          state.sentDate = null;
+          goToStep(3);
+          break;
+        case 'go-step-1':
+          goToStep(1);
+          break;
+        case 'reset-all':
+          e.preventDefault();
+          resetAll();
+          break;
+        case 'pick-logo':
+          e.stopPropagation();
+          logoInput.click();
+          break;
+        case 'download-summary':
+          downloadBlob(buildSummaryText(), 'resumen-cotiapp.txt', 'text/plain;charset=utf-8');
+          break;
+        case 'export-pdf':
+          exportPDF();
+          break;
+        case 'export-excel':
+          exportExcel();
+          break;
+        case 'copy-text':
+          copyToClipboard(buildSummaryText(), 'copy-text', '✔ Copiado');
+          break;
+        case 'regenerate-mail':
+          ensureMailTemplateInitialized(true);
+          flashButtonLabel('regenerate-mail', '✔ Actualizado');
+          break;
+        case 'toggle-mic':
+          toggleMic();
+          break;
+        case 'send-mail':
+          if (validateMailForm()){
+            var subject = document.getElementById('mailSubject').value;
+            var body = document.getElementById('mailBody').value;
+            var mailto = 'mailto:' + encodeURIComponent(state.clientEmail) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+            state.sentDate = new Intl.DateTimeFormat('es-AR', { day:'numeric', month:'long', year:'numeric' }).format(new Date());
+            render();
+            window.location.href = mailto;
+            document.getElementById('mailForm').style.display = 'none';
+            document.getElementById('mailSuccess').style.display = 'block';
+            document.getElementById('mailSuccessText').textContent =
+              'Se abrió tu programa de correo con el mensaje listo para ' + state.clientEmail + '. Revisalo y confirmá el envío desde ahí. Si no se abrió nada, usá "Copiar mensaje" y pegalo en tu webmail.';
+          }
+          break;
+        case 'copy-mail':
+          if (validateMailForm()){
+            var mailText = 'Para: ' + state.clientEmail + '\nAsunto: ' + (document.getElementById('mailSubject').value || '') + '\n\n' + (document.getElementById('mailBody').value || '');
+            copyToClipboard(mailText, 'copy-mail', '✔ Copiado');
+          }
+          break;
+        case 'edit-mail':
+          document.getElementById('mailForm').style.display = '';
+          document.getElementById('mailSuccess').style.display = 'none';
+          break;
+        case 'open-how-it-works':
+          openHowItWorks();
+          break;
+        case 'close-how-it-works':
+          closeHowItWorks();
+          break;
+      }
+    });
+
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') closeHowItWorks();
+    });
+
+    render();
+  });
+
+})();
+</script>
+</body>
+</html>
