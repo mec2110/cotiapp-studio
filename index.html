@@ -1531,12 +1531,39 @@
     recognition.continuous = true;
     recognition.interimResults = true;
 
+    // Diagnóstico: si al cabo de unos segundos el navegador nunca reportó
+    // haber recibido audio ni resultados, el motor de reconocimiento (los
+    // servidores de Google) no está respondiendo — típicamente por una
+    // extensión (bloqueador de anuncios/privacidad), un firewall o VPN
+    // corporativo que bloquea la conexión, no por un error del código.
+    var gotAudio = false;
+    var gotResult = false;
+    if (window.micWatchdog) clearTimeout(window.micWatchdog);
+    window.micWatchdog = setTimeout(function(){
+      if (isRecording && !gotResult){
+        setMicStatus(
+          gotAudio
+            ? 'El micrófono está activo pero el servicio de reconocimiento de voz de Google no responde. Puede deberse a una extensión (bloqueador de anuncios/privacidad), un firewall o VPN. Probá en una ventana de incógnito sin extensiones.'
+            : 'El navegador no está recibiendo señal del micrófono. Revisá que el sistema operativo tenga permitido el acceso al micrófono para este navegador y que esté seleccionado el dispositivo de entrada correcto.',
+          true
+        );
+      }
+    }, 6000);
+
     recognition.onstart = function(){
       isRecording = true;
       setMicButtonState(true);
       setMicStatus('Escuchando… hablá con naturalidad.', false);
     };
+    recognition.onaudiostart = function(){
+      gotAudio = true;
+      setMicStatus('Micrófono activo. Esperando que detecte tu voz…', false);
+    };
+    recognition.onspeechstart = function(){
+      setMicStatus('Detectando tu voz…', false);
+    };
     recognition.onresult = function(event){
+      gotResult = true;
       var finalText = '';
       var interimText = '';
       for (var i = 0; i < event.results.length; i++){
@@ -1548,8 +1575,10 @@
       var combined = (recordingBaseText + separator + finalText + interimText).trim();
       document.getElementById('observations').value = combined;
       state.observations = combined;
+      setMicStatus('Escuchando… hablá con naturalidad.', false);
     };
     recognition.onerror = function(event){
+      if (window.micWatchdog) clearTimeout(window.micWatchdog);
       var messages = {
         'not-allowed': 'Permitile a tu navegador usar el micrófono para poder dictar (revisá el ícono de candado/micrófono en la barra de direcciones).',
         'no-speech': 'No se detectó voz. Probá hablar más cerca del micrófono.',
@@ -1563,6 +1592,7 @@
       stopRecording();
     };
     recognition.onend = function(){
+      if (window.micWatchdog) clearTimeout(window.micWatchdog);
       if (isRecording){
         recordingBaseText = document.getElementById('observations').value;
         setMicStatus('Dictado detenido.', false);
@@ -1576,6 +1606,7 @@
   }
 
   function stopRecording(){
+    if (window.micWatchdog) clearTimeout(window.micWatchdog);
     if (recognition && isRecording){
       try{ recognition.stop(); }catch(e){}
     }
