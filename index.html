@@ -106,11 +106,18 @@
   /* ==========================================================
      4. CHIPS — selector de disciplina
      ========================================================== */
+  .mode-toggle{ display:inline-flex; gap:4px; background:var(--bg-soft-1); border-radius:var(--radius-pill); padding:4px; margin-bottom:16px; } /* 2x8 margin */
+  .mode-btn{ border:none; background:transparent; color:var(--text-muted); border-radius:var(--radius-pill); padding:8px 16px; font-size:13px; font-weight:700; transition:background .15s ease, color .15s ease; }
+  .mode-btn.is-active{ background:var(--primary-dark); color:#fff; }
+  .mode-help{ font-size:13px; color:var(--text-muted); margin-bottom:16px; } /* 2x8 */
   .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; } /* 1x8 gap / 3x8 margin */
   .chip{ border:1.5px solid var(--primary-dark); background:var(--white); color:var(--primary-dark); border-radius:var(--radius-pill); padding:8px 16px; font-size:13px; font-weight:600; display:inline-flex; align-items:center; gap:6px; transition:background .15s ease, color .15s ease; } /* 1x8 / 2x8 padding */
   .chip:hover{ background:var(--bg-soft-1); }
   .chip.is-active{ background:var(--bg-soft-2); color:var(--primary-dark); border-color:var(--primary-dark); }
   .chip .icon{ color:inherit; }
+  .item-block{ padding-bottom:8px; margin-bottom:8px; border-bottom:1px dashed var(--border); }
+  .item-block:last-of-type{ border-bottom:none; }
+  .hourly-toggle-row{ background:var(--bg-soft-2); }
 
   /* ==========================================================
      5. CAMPOS DE FORMULARIO (dinámicos por disciplina)
@@ -378,6 +385,12 @@
           </div>
         </div>
 
+        <div class="mode-toggle" id="modeToggle">
+          <button type="button" class="mode-btn is-active" data-mode="single">Un servicio</button>
+          <button type="button" class="mode-btn" data-mode="multi">Varios proyectos</button>
+        </div>
+        <p class="mode-help" id="modeHelp">Elegí la disciplina de tu proyecto.</p>
+
         <div class="chip-row" id="chipRow">
           <button type="button" class="chip is-active" data-service="grafico"><span class="icon icon-sm" data-icon="grafico" aria-hidden="true"></span>Diseño Gráfico</button>
           <button type="button" class="chip" data-service="app"><span class="icon icon-sm" data-icon="app" aria-hidden="true"></span>App Mobile</button>
@@ -433,9 +446,7 @@
           </div>
         </div>
 
-        <p class="section-title" style="margin-top:8px;">Detalles — <span id="disciplineName">Diseño Gráfico</span></p>
-        <div class="field-grid" id="disciplineFieldsGrid"></div>
-        <label class="toggle-row" id="disciplineCheckboxRow"></label>
+        <div id="itemsContainer"></div>
 
         <div class="field field-full" style="margin-bottom:24px;">
           <div class="field-label-row">
@@ -817,15 +828,14 @@
      ======================================================== */
   var state = {
     step: 1,
-    service: 'grafico',
+    mode: 'single', // 'single' | 'multi'
+    activeServices: ['grafico'],
+    items: { grafico: defaultItem() },
     projectName: '',
     complexity: '',
     clientType: '',
     deadlineWeeks: '',
     currency: 'ARS',
-    field1: '',
-    field2: '',
-    checkboxOn: false,
     observations: '',
     logoDataUrl: null,
     logoFileName: '',
@@ -836,6 +846,14 @@
     mailSubject: null,
     mailBody: null
   };
+
+  function defaultItem(){
+    return { field1:'', field2:'', checkboxOn:false, hourlyMode:false, hourlyRate:'', hours:'' };
+  }
+  function ensureItem(svc){
+    if (!state.items[svc]) state.items[svc] = defaultItem();
+    return state.items[svc];
+  }
 
   var COMPLEXITY_MULTIPLIER = { baja:0.85, media:1, alta:1.35 };
   var CLIENT_MULTIPLIER = { particular:0.9, pyme:1, empresa:1.2, agencia:1.35 };
@@ -855,67 +873,78 @@
     return found ? found[1] : '';
   }
 
-  function computeEstimate(){
-    var cfg = DISCIPLINE_CONFIG[state.service];
-    var f1 = parseFloat(state.field1) || 0;
+  // Calcula el costo de un ítem/disciplina individual. Si el ítem tiene
+  // activado "cotizar por tarifa horaria", ese cálculo REEMPLAZA por completo
+  // al cálculo por tarifas de referencia (no se combinan).
+  function computeItemCost(svc, item, combinedMult){
+    var cfg = DISCIPLINE_CONFIG[svc];
+    var prefix = cfg.label + ' — ';
     var items = []; // { label, amount, kind: 'primary'|'secondary'|'extra' }
     var subtotal = 0;
 
-    if (state.service === 'grafico'){
+    if (item.hourlyMode){
+      var rate = parseFloat(item.hourlyRate) || 0;
+      var hrs = parseFloat(item.hours) || 0;
+      var hourlyCost = rate * hrs;
+      subtotal += hourlyCost;
+      items.push({ label: prefix + hrs + ' hora(s) estimada(s) × tarifa horaria', amount: hourlyCost, kind:'primary' });
+      return { items: items, subtotal: subtotal };
+    }
+
+    var f1 = parseFloat(item.field1) || 0;
+
+    if (svc === 'grafico'){
       var piezaCost = f1 * 18000;
       subtotal += piezaCost;
-      items.push({ label: f1 + ' pieza(s) gráfica(s)', amount: piezaCost, kind:'primary' });
-      var correcciones = parseFloat(state.field2) || 0;
+      items.push({ label: prefix + f1 + ' pieza(s) gráfica(s)', amount: piezaCost, kind:'primary' });
+      var correcciones = parseFloat(item.field2) || 0;
       var extraCorr = Math.max(0, correcciones - 2);
       if (extraCorr > 0){
         var correccionesCost = extraCorr * 3500;
         subtotal += correccionesCost;
-        items.push({ label: extraCorr + ' corrección(es) extra (2 incluidas)', amount: correccionesCost, kind:'secondary' });
+        items.push({ label: prefix + extraCorr + ' corrección(es) extra (2 incluidas)', amount: correccionesCost, kind:'secondary' });
       }
-    } else if (state.service === 'app'){
-      var complexMult = { baja:0.85, media:1, alta:1.4 }[state.field2] || 1;
+    } else if (svc === 'app'){
+      var complexMult = { baja:0.85, media:1, alta:1.4 }[item.field2] || 1;
       var pantallaCost = f1 * 25000 * complexMult;
       subtotal += pantallaCost;
-      items.push({ label: f1 + ' pantalla(s) · complejidad ' + (optionLabel(cfg.field2, state.field2) || '—'), amount: pantallaCost, kind:'primary' });
-    } else if (state.service === 'uxui'){
-      var fidelityMult = { wireframe:0.7, mockup:1, prototipo:1.3 }[state.field2] || 1;
+      items.push({ label: prefix + f1 + ' pantalla(s) · complejidad ' + (optionLabel(cfg.field2, item.field2) || '—'), amount: pantallaCost, kind:'primary' });
+    } else if (svc === 'uxui'){
+      var fidelityMult = { wireframe:0.7, mockup:1, prototipo:1.3 }[item.field2] || 1;
       var uxuiCost = f1 * 22000 * fidelityMult;
       subtotal += uxuiCost;
-      items.push({ label: f1 + ' pantalla(s)/flujo(s) · ' + (optionLabel(cfg.field2, state.field2) || '—'), amount: uxuiCost, kind:'primary' });
-    } else if (state.service === 'ilustracion'){
-      var estiloMult = { byn:1, color:1.25, fondo:1.6 }[state.field2] || 1;
+      items.push({ label: prefix + f1 + ' pantalla(s)/flujo(s) · ' + (optionLabel(cfg.field2, item.field2) || '—'), amount: uxuiCost, kind:'primary' });
+    } else if (svc === 'ilustracion'){
+      var estiloMult = { byn:1, color:1.25, fondo:1.6 }[item.field2] || 1;
       var ilustracionCost = f1 * 20000 * estiloMult;
       subtotal += ilustracionCost;
-      items.push({ label: f1 + ' ilustración(es) · ' + (optionLabel(cfg.field2, state.field2) || '—'), amount: ilustracionCost, kind:'primary' });
-    } else if (state.service === 'video'){
+      items.push({ label: prefix + f1 + ' ilustración(es) · ' + (optionLabel(cfg.field2, item.field2) || '—'), amount: ilustracionCost, kind:'primary' });
+    } else if (svc === 'video'){
       var videoCost = f1 > 0 ? (60000 + f1 * 800) : 0;
       subtotal += videoCost;
-      items.push({ label: f1 + ' segundo(s) de video', amount: videoCost, kind:'primary' });
-    } else if (state.service === 'writing'){
+      items.push({ label: prefix + f1 + ' segundo(s) de video', amount: videoCost, kind:'primary' });
+    } else if (svc === 'writing'){
       var writingCost = f1 * 35;
       subtotal += writingCost;
-      items.push({ label: f1 + ' palabra(s) estimadas', amount: writingCost, kind:'primary' });
-    } else if (state.service === 'web'){
+      items.push({ label: prefix + f1 + ' palabra(s) estimadas', amount: writingCost, kind:'primary' });
+    } else if (svc === 'web'){
       var pageCost = f1 * 40000;
       subtotal += pageCost;
-      items.push({ label: f1 + ' página(s)/sección(es)', amount: pageCost, kind:'primary' });
-    } else if (state.service === 'social'){
+      items.push({ label: prefix + f1 + ' página(s)/sección(es)', amount: pageCost, kind:'primary' });
+    } else if (svc === 'social'){
       var weekMap = { semanal:1, mensual:4, trimestral:13 };
-      var totalPosts = f1 * (weekMap[state.field2] || 1);
+      var totalPosts = f1 * (weekMap[item.field2] || 1);
       var socialCost = totalPosts * 6000;
       subtotal += socialCost;
-      items.push({ label: totalPosts + ' posteo(s) · modalidad ' + (optionLabel(cfg.field2, state.field2) || '—'), amount: socialCost, kind:'primary' });
+      items.push({ label: prefix + totalPosts + ' posteo(s) · modalidad ' + (optionLabel(cfg.field2, item.field2) || '—'), amount: socialCost, kind:'primary' });
     }
 
     // Reescala el costo específico de la disciplina según la Complejidad
     // y el Tipo de cliente elegidos en "Detalles del proyecto"
-    var complexityMult = COMPLEXITY_MULTIPLIER[state.complexity] || 1;
-    var clientMult = CLIENT_MULTIPLIER[state.clientType] || 1;
-    var combinedMult = complexityMult * clientMult;
     items = items.map(function(it){ return { label: it.label, amount: it.amount * combinedMult, kind: it.kind }; });
     subtotal = subtotal * combinedMult;
 
-    if (state.checkboxOn && cfg.checkbox){
+    if (item.checkboxOn && cfg.checkbox){
       var chk = cfg.checkbox;
       var chkAmount = 0;
       if (chk.extraMultiplier){
@@ -925,8 +954,27 @@
         chkAmount = chk.extra;
         subtotal += chk.extra;
       }
-      items.push({ label: chk.label, amount: chkAmount, kind:'extra' });
+      items.push({ label: prefix + chk.label, amount: chkAmount, kind:'extra' });
     }
+
+    return { items: items, subtotal: subtotal };
+  }
+
+  function computeEstimate(){
+    var complexityMult = COMPLEXITY_MULTIPLIER[state.complexity] || 1;
+    var clientMult = CLIENT_MULTIPLIER[state.clientType] || 1;
+    var combinedMult = complexityMult * clientMult;
+
+    var items = []; // { label, amount, kind: 'primary'|'secondary'|'extra' }
+    var subtotal = 0;
+
+    state.activeServices.forEach(function(svc){
+      var item = state.items[svc];
+      if (!item) return;
+      var res = computeItemCost(svc, item, combinedMult);
+      items = items.concat(res.items);
+      subtotal += res.subtotal;
+    });
 
     // Ajuste por plazo: proyectos urgentes (1 semana o menos) suman recargo;
     // plazos amplios (6 semanas o más) obtienen un pequeño descuento.
@@ -967,7 +1015,7 @@
   }
 
   function disciplineLabel(){
-    return DISCIPLINE_CONFIG[state.service].label;
+    return state.activeServices.map(function(svc){ return DISCIPLINE_CONFIG[svc].label; }).join(' + ');
   }
 
   function projectDescription(){
@@ -977,15 +1025,24 @@
   /* ========================================================
      4. CAMPOS DINÁMICOS POR DISCIPLINA
      ======================================================== */
-  function fieldHtml(fieldCfg, key){
+  function fieldHtml(fieldCfg, svc, key){
     if (!fieldCfg) return '';
-    var id = 'df_' + key;
+    var id = 'df_' + svc + '_' + key;
+    var wrapId = 'wrap_' + svc + '_' + key;
     if (fieldCfg.type === 'select'){
       var opts = '<option value="" selected disabled>Seleccionar opción</option>' +
         fieldCfg.options.map(function(o){ return '<option value="' + o[0] + '">' + escapeHtml(o[1]) + '</option>'; }).join('');
-      return '<div class="field" id="wrap_' + key + '"><label for="' + id + '">' + escapeHtml(fieldCfg.label) + '</label><select id="' + id + '">' + opts + '</select><span class="field-msg"></span></div>';
+      return '<div class="field" id="' + wrapId + '"><label for="' + id + '">' + escapeHtml(fieldCfg.label) + '</label><select id="' + id + '">' + opts + '</select><span class="field-msg"></span></div>';
     }
-    return '<div class="field" id="wrap_' + key + '"><label for="' + id + '">' + escapeHtml(fieldCfg.label) + '</label><input type="number" id="' + id + '" min="' + (fieldCfg.min != null ? fieldCfg.min : 0) + '" placeholder="' + escapeHtml(fieldCfg.placeholder || '') + '"><span class="field-msg"></span></div>';
+    return '<div class="field" id="' + wrapId + '"><label for="' + id + '">' + escapeHtml(fieldCfg.label) + '</label><input type="number" id="' + id + '" min="' + (fieldCfg.min != null ? fieldCfg.min : 0) + '" placeholder="' + escapeHtml(fieldCfg.placeholder || '') + '"><span class="field-msg"></span></div>';
+  }
+
+  function hourlyFieldsHtml(svc){
+    var currencyLabel = CURRENCY_PREFIX[state.currency] || '$';
+    return '<div class="field-grid">' +
+      '<div class="field" id="wrap_' + svc + '_hourlyRate"><label for="hourlyRate_' + svc + '">Tu tarifa horaria (' + currencyLabel + ')</label><input type="number" id="hourlyRate_' + svc + '" min="0" placeholder="Ej: 8000"><span class="field-msg"></span></div>' +
+      '<div class="field" id="wrap_' + svc + '_hours"><label for="hours_' + svc + '">Horas estimadas</label><input type="number" id="hours_' + svc + '" min="0" placeholder="Ej: 10"><span class="field-msg"></span></div>' +
+    '</div>';
   }
 
   function checkboxPreviewLabel(chk){
@@ -994,37 +1051,73 @@
     return '';
   }
 
-  function renderDisciplineFields(){
-    var cfg = DISCIPLINE_CONFIG[state.service];
-    document.getElementById('disciplineName').textContent = cfg.label;
+  // Renderiza el bloque de campos de cada disciplina activa (una sola en
+  // modo "Un servicio", varias en modo "Varios proyectos").
+  function renderItems(){
+    var container = document.getElementById('itemsContainer');
+    var html = '';
 
-    var grid = document.getElementById('disciplineFieldsGrid');
-    grid.innerHTML = fieldHtml(cfg.field1, 'field1') + fieldHtml(cfg.field2, 'field2');
-    grid.style.gridTemplateColumns = cfg.field2 ? 'repeat(2,1fr)' : '1fr';
+    state.activeServices.forEach(function(svc){
+      var item = ensureItem(svc);
+      var cfg = DISCIPLINE_CONFIG[svc];
 
-    var chk = cfg.checkbox;
-    var chkRow = document.getElementById('disciplineCheckboxRow');
-    chkRow.setAttribute('for', 'disciplineCheckbox');
-    chkRow.innerHTML =
-      '<span class="toggle-row-left">' +
-        '<input type="checkbox" id="disciplineCheckbox">' +
-        (chk.icon ? '<span class="icon icon-sm" data-icon="' + chk.icon + '" aria-hidden="true"></span>' : '') +
-        '<span><strong>' + escapeHtml(chk.label) + '</strong>' + (chk.sub ? '<small>' + escapeHtml(chk.sub) + '</small>' : '') + '</span>' +
-      '</span>' +
-      '<span class="toggle-amount">' + checkboxPreviewLabel(chk) + '</span>';
+      html += '<div class="item-block" data-item-block="' + svc + '">';
+      html += '<p class="section-title" style="margin-top:8px;">Detalles — ' + escapeHtml(cfg.label) + '</p>';
 
-    state.field1 = '';
-    state.field2 = '';
-    state.checkboxOn = false;
+      html += '<label class="toggle-row hourly-toggle-row" for="hourlyToggle_' + svc + '">' +
+        '<span class="toggle-row-left">' +
+          '<input type="checkbox" id="hourlyToggle_' + svc + '"' + (item.hourlyMode ? ' checked' : '') + '>' +
+          '<span><strong>Cotizar por mi tarifa horaria</strong><small>Reemplaza el cálculo por tarifas de referencia</small></span>' +
+        '</span>' +
+      '</label>';
 
-    var el1 = document.getElementById('df_field1');
-    if (el1) el1.addEventListener(cfg.field1.type === 'select' ? 'change' : 'input', function(e){ state.field1 = e.target.value; render(); });
-    var el2 = document.getElementById('df_field2');
-    if (el2) el2.addEventListener(cfg.field2 && cfg.field2.type === 'select' ? 'change' : 'input', function(e){ state.field2 = e.target.value; render(); });
-    var chkEl = document.getElementById('disciplineCheckbox');
-    chkEl.addEventListener('change', function(e){ state.checkboxOn = e.target.checked; render(); });
+      if (item.hourlyMode){
+        html += hourlyFieldsHtml(svc);
+      } else {
+        html += '<div class="field-grid" style="grid-template-columns:' + (cfg.field2 ? 'repeat(2,1fr)' : '1fr') + ';">' +
+          fieldHtml(cfg.field1, svc, 'field1') + fieldHtml(cfg.field2, svc, 'field2') +
+        '</div>';
+        var chk = cfg.checkbox;
+        html += '<label class="toggle-row" for="chk_' + svc + '">' +
+          '<span class="toggle-row-left">' +
+            '<input type="checkbox" id="chk_' + svc + '"' + (item.checkboxOn ? ' checked' : '') + '>' +
+            (chk.icon ? '<span class="icon icon-sm" data-icon="' + chk.icon + '" aria-hidden="true"></span>' : '') +
+            '<span><strong>' + escapeHtml(chk.label) + '</strong>' + (chk.sub ? '<small>' + escapeHtml(chk.sub) + '</small>' : '') + '</span>' +
+          '</span>' +
+          '<span class="toggle-amount">' + checkboxPreviewLabel(chk) + '</span>' +
+        '</label>';
+      }
+      html += '</div>';
+    });
 
-    paintIcons(chkRow);
+    container.innerHTML = html;
+
+    state.activeServices.forEach(function(svc){
+      var item = state.items[svc];
+      var cfg = DISCIPLINE_CONFIG[svc];
+
+      var hourlyToggle = document.getElementById('hourlyToggle_' + svc);
+      if (hourlyToggle) hourlyToggle.addEventListener('change', function(e){
+        item.hourlyMode = e.target.checked;
+        renderItems();
+      });
+
+      if (item.hourlyMode){
+        var rateEl = document.getElementById('hourlyRate_' + svc);
+        var hoursEl = document.getElementById('hours_' + svc);
+        if (rateEl){ rateEl.value = item.hourlyRate; rateEl.addEventListener('input', function(e){ item.hourlyRate = e.target.value; render(); }); }
+        if (hoursEl){ hoursEl.value = item.hours; hoursEl.addEventListener('input', function(e){ item.hours = e.target.value; render(); }); }
+      } else {
+        var el1 = document.getElementById('df_' + svc + '_field1');
+        if (el1){ el1.value = item.field1; el1.addEventListener(cfg.field1.type === 'select' ? 'change' : 'input', function(e){ item.field1 = e.target.value; render(); }); }
+        var el2 = document.getElementById('df_' + svc + '_field2');
+        if (el2){ el2.value = item.field2; el2.addEventListener(cfg.field2 && cfg.field2.type === 'select' ? 'change' : 'input', function(e){ item.field2 = e.target.value; render(); }); }
+        var chkEl = document.getElementById('chk_' + svc);
+        if (chkEl) chkEl.addEventListener('change', function(e){ item.checkboxOn = e.target.checked; render(); });
+      }
+    });
+
+    paintIcons(container);
     render();
   }
 
@@ -1129,23 +1222,38 @@
     clearFieldError('fieldComplexity');
     clearFieldError('fieldClientType');
     clearFieldError('fieldDeadline');
-    clearFieldError('wrap_field1');
-    clearFieldError('wrap_field2');
 
     if (!state.projectName.trim()){ setFieldError('fieldProjectName', 'Este campo es obligatorio'); valid = false; }
     if (!state.complexity){ setFieldError('fieldComplexity', 'Seleccioná una opción'); valid = false; }
     if (!state.clientType){ setFieldError('fieldClientType', 'Seleccioná una opción'); valid = false; }
     if (!state.deadlineWeeks || parseInt(state.deadlineWeeks, 10) < 1){ setFieldError('fieldDeadline', 'Ingresá un plazo válido'); valid = false; }
 
-    var cfg = DISCIPLINE_CONFIG[state.service];
-    ['field1','field2'].forEach(function(key){
-      var fcfg = cfg[key];
-      if (!fcfg) return;
-      var val = state[key];
-      var invalid = fcfg.type === 'select' ? !val : (val === '' || isNaN(parseFloat(val)) || parseFloat(val) < (fcfg.min != null ? fcfg.min : 0));
-      if (invalid){
-        setFieldError('wrap_' + key, fcfg.type === 'select' ? 'Seleccioná una opción' : 'Ingresá un valor válido');
-        valid = false;
+    state.activeServices.forEach(function(svc){
+      var item = state.items[svc];
+      if (!item) return;
+      var cfg = DISCIPLINE_CONFIG[svc];
+
+      clearFieldError('wrap_' + svc + '_field1');
+      clearFieldError('wrap_' + svc + '_field2');
+      clearFieldError('wrap_' + svc + '_hourlyRate');
+      clearFieldError('wrap_' + svc + '_hours');
+
+      if (item.hourlyMode){
+        var rateOk = item.hourlyRate !== '' && !isNaN(parseFloat(item.hourlyRate)) && parseFloat(item.hourlyRate) > 0;
+        var hoursOk = item.hours !== '' && !isNaN(parseFloat(item.hours)) && parseFloat(item.hours) > 0;
+        if (!rateOk){ setFieldError('wrap_' + svc + '_hourlyRate', 'Ingresá tu tarifa horaria'); valid = false; }
+        if (!hoursOk){ setFieldError('wrap_' + svc + '_hours', 'Ingresá las horas estimadas'); valid = false; }
+      } else {
+        ['field1','field2'].forEach(function(key){
+          var fcfg = cfg[key];
+          if (!fcfg) return;
+          var val = item[key];
+          var invalid = fcfg.type === 'select' ? !val : (val === '' || isNaN(parseFloat(val)) || parseFloat(val) < (fcfg.min != null ? fcfg.min : 0));
+          if (invalid){
+            setFieldError('wrap_' + svc + '_' + key, fcfg.type === 'select' ? 'Seleccioná una opción' : 'Ingresá un valor válido');
+            valid = false;
+          }
+        });
       }
     });
     return valid;
@@ -1192,8 +1300,9 @@
      ======================================================== */
   function resetAll(){
     state = {
-      step:1, service:'grafico', projectName:'', complexity:'', clientType:'', deadlineWeeks:'', currency:'ARS',
-      field1:'', field2:'', checkboxOn:false, observations:'',
+      step:1, mode:'single', activeServices:['grafico'], items:{ grafico: defaultItem() },
+      projectName:'', complexity:'', clientType:'', deadlineWeeks:'', currency:'ARS',
+      observations:'',
       logoDataUrl:null, logoFileName:'', designerName:'', clientName:'', clientEmail:'',
       sentDate:null, mailSubject:null, mailBody:null
     };
@@ -1208,6 +1317,10 @@
     document.getElementById('clientEmail').value = '';
     document.getElementById('mailSubject').value = '';
     document.getElementById('mailBody').value = '';
+    document.querySelectorAll('.mode-btn').forEach(function(b){
+      b.classList.toggle('is-active', b.getAttribute('data-mode') === 'single');
+    });
+    document.getElementById('modeHelp').textContent = 'Elegí la disciplina de tu proyecto.';
     document.querySelectorAll('.chip').forEach(function(c){
       c.classList.toggle('is-active', c.getAttribute('data-service') === 'grafico');
     });
@@ -1216,7 +1329,7 @@
     document.getElementById('mailSuccess').style.display = 'none';
     stopRecording();
     setMicStatus('');
-    renderDisciplineFields();
+    renderItems();
     goToStep(1);
   }
 
@@ -1498,7 +1611,7 @@
      ======================================================== */
   document.addEventListener('DOMContentLoaded', function(){
     paintIcons(document);
-    renderDisciplineFields();
+    renderItems();
     document.getElementById('folderIllustration').innerHTML = ILLUSTRATIONS.default;
 
     if (!window.isSecureContext || !getSpeechRecognitionCtor()){
@@ -1510,13 +1623,57 @@
       );
     }
 
+    document.getElementById('modeToggle').addEventListener('click', function(e){
+      var btn = e.target.closest('.mode-btn');
+      if (!btn) return;
+      var mode = btn.getAttribute('data-mode');
+      if (mode === state.mode) return;
+      state.mode = mode;
+      document.querySelectorAll('.mode-btn').forEach(function(b){
+        b.classList.toggle('is-active', b.getAttribute('data-mode') === mode);
+      });
+      document.getElementById('modeHelp').textContent = mode === 'multi'
+        ? 'Seleccioná todas las disciplinas que quieras incluir en este presupuesto.'
+        : 'Elegí la disciplina de tu proyecto.';
+
+      if (mode === 'single'){
+        var keep = state.activeServices[0] || 'grafico';
+        state.activeServices = [keep];
+        ensureItem(keep);
+      }
+      document.querySelectorAll('.chip').forEach(function(c){
+        c.classList.toggle('is-active', state.activeServices.indexOf(c.getAttribute('data-service')) !== -1);
+      });
+      renderItems();
+    });
+
     document.getElementById('chipRow').addEventListener('click', function(e){
       var chip = e.target.closest('.chip');
       if (!chip) return;
-      document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('is-active'); });
-      chip.classList.add('is-active');
-      state.service = chip.getAttribute('data-service');
-      renderDisciplineFields();
+      var svc = chip.getAttribute('data-service');
+
+      if (state.mode === 'single'){
+        document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('is-active'); });
+        chip.classList.add('is-active');
+        state.activeServices = [svc];
+        ensureItem(svc);
+      } else {
+        var idx = state.activeServices.indexOf(svc);
+        if (idx === -1){
+          state.activeServices.push(svc);
+          ensureItem(svc);
+          chip.classList.add('is-active');
+        } else {
+          if (state.activeServices.length === 1){
+            showToast('Seleccioná al menos una disciplina.');
+            return;
+          }
+          state.activeServices.splice(idx, 1);
+          delete state.items[svc];
+          chip.classList.remove('is-active');
+        }
+      }
+      renderItems();
     });
 
     document.getElementById('projectName').addEventListener('input', function(e){ state.projectName = e.target.value; render(); });
