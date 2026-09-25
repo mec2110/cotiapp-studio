@@ -1159,9 +1159,7 @@
       return '<li><span>' + escapeHtml(it.label) + '</span><span>' + formatCurrency(it.amount) + '</span></li>';
     }).join('');
 
-    var pdfParts = [projectDescription(), disciplineLabel()];
-    if (est.items[0]) pdfParts.push(est.items[0].label);
-    document.getElementById('pdfSubtitle').textContent = pdfParts.join(' · ');
+    document.getElementById('pdfSubtitle').textContent = projectDescription() + ' · ' + disciplineLabel();
     document.getElementById('pdfPriceRange').textContent = formatCurrency(est.low) + ' / ' + formatCurrency(est.high);
 
     document.getElementById('clientHeading').textContent = state.clientName || 'Tu cliente';
@@ -1711,7 +1709,7 @@
     document.getElementById('complexity').addEventListener('change', function(e){ state.complexity = e.target.value; render(); });
     document.getElementById('clientType').addEventListener('change', function(e){ state.clientType = e.target.value; render(); });
     document.getElementById('deadlineWeeks').addEventListener('input', function(e){ state.deadlineWeeks = e.target.value; render(); });
-    document.getElementById('currency').addEventListener('change', function(e){ state.currency = e.target.value; render(); });
+    document.getElementById('currency').addEventListener('change', function(e){ state.currency = e.target.value; renderItems(); });
     document.getElementById('observations').addEventListener('input', function(e){ state.observations = e.target.value; });
 
     document.getElementById('designerName').addEventListener('input', function(e){ state.designerName = e.target.value; render(); });
